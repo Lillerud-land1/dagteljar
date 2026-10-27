@@ -194,6 +194,12 @@ html.ptr,html.ptr body{overscroll-behavior-y:none}
 .strip .btn{min-height:40px}
 .acct{display:flex;flex-direction:column;gap:16px;padding:18px 20px 0}
 .acct p{margin:0}
+.widget-box{display:flex;flex-direction:column;gap:10px;padding-top:16px;border-top:1px solid var(--line)}
+.widget-box h3{margin:0;font-size:18px;font-weight:700}
+.widget-box a{color:var(--focus);font-weight:600}
+.steps{display:flex;flex-direction:column;gap:6px;margin:0;padding-left:22px;font-size:15px}
+.widget-btns{display:flex;flex-wrap:wrap;gap:10px}
+.widget-code{min-height:140px;font:12px/1.4 ui-monospace,Menlo,Consolas,monospace;resize:vertical}
 .muted{color:var(--ink-2)}
 
 /* Ark (detaljar og skjema) */
@@ -1374,6 +1380,17 @@ input[type="date"].input,input[type="time"].input{-webkit-appearance:none;appear
         + `<div class="form-head"><h2 id="sheetTitle">Kontoen din</h2><button type="button" class="x plain" data-close aria-label="Lukk">${ICON.x}</button></div>`
         + `<p>Du er logga inn som <b>${esc(S.acc.namn)}</b>. Logg inn med same namn og passord på PC-en og telefonen, så ser du dei same nedteljingane overalt.</p>`
         + `<p class="muted" id="syncInfo">${esc(syncText())}</p>`
+        + `<section class="widget-box" aria-labelledby="widgetH"><h3 id="widgetH">Widget på iPhone</h3>`
+        + `<p class="muted">Med den gratis appen Scriptable kan du sjå nedteljingane på startskjermen og låseskjermen.</p>`
+        + `<ol class="steps"><li>Last ned <a href="https://apps.apple.com/app/scriptable/id1405459188" target="_blank" rel="noopener">Scriptable frå App Store</a>.</li>`
+        + `<li>Trykk på «Kopier widget-koden» under.</li>`
+        + `<li>Opne Scriptable, trykk på + øvst, lim inn koden og kall skriptet Dagteljar.</li>`
+        + `<li>Hald fingeren på startskjermen, trykk på Rediger og «Legg til widget», og vel Scriptable i ønskt storleik.</li>`
+        + `<li>Hald fingeren på den nye widgeten, vel «Rediger widget» og vel Dagteljar under Script. Vil du ha éi bestemt nedteljing, skriv namnet i Parameter, til dømes Halloween.</li></ol>`
+        + `<div class="widget-btns"><button type="button" class="btn btn-primary" data-widget>Kopier widget-koden</button><button type="button" class="btn" data-widget-off>Slå av widget-lenkjene</button></div>`
+        + `<p class="hint">Koden kan berre lese nedteljingane dine, ikkje endre dei. «Slå av widget-lenkjene» stoppar alle widgetane du har laga.</p>`
+        + `<textarea class="input widget-code" id="widgetCode" readonly hidden aria-label="Widget-koden"></textarea>`
+        + `</section>`
         + `<div class="form-foot"><button type="button" class="btn" data-logout>Logg ut</button><button type="button" class="btn btn-primary" data-sync>Synk no</button></div>`
         + `</div>`, 'acct');
       return;
@@ -1397,6 +1414,60 @@ input[type="date"].input,input[type="time"].input{-webkit-appearance:none;appear
       + `<div class="form-foot"><button type="button" class="btn" data-close>Avbryt</button><button type="submit" class="btn btn-primary" id="acctSubmit">${ny ? 'Lag konto' : 'Logg inn'}</button></div>`
       + `</form>`;
   }
+  // Widget-koden: ny lenkje som berre kan lese, sett inn i skriptet og kopiert.
+  // Safari vil ha kopieringa i same trykk, så teksten blir gitt som eit løfte til ClipboardItem.
+  async function copyWidget(btn) {
+    // Andre trykk når koden alt står i feltet: kopier det som står der.
+    const shown = $('#widgetCode', layer);
+    if (shown && !shown.hidden && shown.value) {
+      try { await navigator.clipboard.writeText(shown.value); toast('Koden er kopiert. Lim han inn i Scriptable.'); }
+      catch (e) { shown.focus(); shown.setSelectionRange(0, shown.value.length); toast('Hald fingeren på koden, vel «Vel alle» og så «Kopier».'); }
+      return;
+    }
+    const code = (async () => {
+      const [{ nokkel }, tpl] = await Promise.all([
+        api('/widget-nokkel', { method: 'POST' }),
+        fetch('scriptable.js', { cache: 'no-store' }).then(r => {
+          if (!r.ok) throw Object.assign(new Error('script'), { code: 'offline' });
+          return r.text();
+        }),
+      ]);
+      return tpl.replace("'__NOKKEL__'", `'${nokkel}'`).replace("'__API__'", `'${API}'`);
+    })();
+    code.catch(() => {});
+    btn.disabled = true;
+    try {
+      try {
+        await navigator.clipboard.write([new ClipboardItem({ 'text/plain': code.then(t => new Blob([t], { type: 'text/plain' })) })]);
+      } catch (e) {
+        await navigator.clipboard.writeText(await code);
+      }
+      toast('Koden er kopiert. Lim han inn i Scriptable.');
+    } catch (e) {
+      try {
+        const t = await code, box = $('#widgetCode', layer);
+        if (box) { box.hidden = false; box.value = t; box.focus(); box.setSelectionRange(0, t.length); }
+        btn.textContent = 'Kopier koden';
+        toast('Koden står i feltet. Trykk på «Kopier koden», eller kopier han for hand.');
+      } catch (e2) { toast(errText(e2)); }
+    } finally { btn.disabled = false; }
+  }
+  async function widgetOff(btn) {
+    if (!btn.classList.contains('armed')) {
+      btn.classList.add('armed', 'btn-danger');
+      btn.textContent = 'Trykk igjen for å slå av';
+      return;
+    }
+    btn.disabled = true;
+    try {
+      await api('/widget-nokkel', { method: 'DELETE' });
+      toast('Widget-lenkjene er slått av');
+    } catch (e) { toast(errText(e)); }
+    btn.disabled = false;
+    btn.classList.remove('armed', 'btn-danger');
+    btn.textContent = 'Slå av widget-lenkjene';
+  }
+
   async function submitAcct() {
     if (!A || A.busy) return;
     const namn = $('#aNamn', layer).value.trim(), pass = $('#aPass', layer).value;
@@ -1435,10 +1506,12 @@ input[type="date"].input,input[type="time"].input{-webkit-appearance:none;appear
 
   layer.addEventListener('click', e => {
     if (e.target === layer) { closeLayer(); return; }
-    const el = e.target.closest('[data-close],[data-edit],[data-del],[data-kind],[data-unit],[data-place],[data-art],[data-tab],[data-logout],[data-sync],[data-new],[data-tpl],[data-start],[data-open],#ruleClear');
+    const el = e.target.closest('[data-close],[data-edit],[data-del],[data-kind],[data-unit],[data-place],[data-art],[data-tab],[data-logout],[data-sync],[data-widget],[data-widget-off],[data-new],[data-tpl],[data-start],[data-open],#ruleClear');
     if (!el) return;
     const today = dateOnly(new Date());
     if ('close' in el.dataset) closeLayer();
+    else if ('widget' in el.dataset) copyWidget(el);
+    else if ('widgetOff' in el.dataset) widgetOff(el);
     else if ('new' in el.dataset) openForm();
     else if (el.dataset.tpl) { const t = TEMPLATES.find(x => x.key === el.dataset.tpl); if (t) openForm(tplEvent(t, today)); }
     else if (el.dataset.start) { const s = STARTERS.find(x => x.key === el.dataset.start); if (s) openForm({ ...s.init(today), color: s.color, photo: { art: s.art } }); }

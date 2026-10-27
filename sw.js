@@ -1,5 +1,5 @@
 // Offline-støtte: sida blir henta frå nettet når det går, elles frå lageret.
-const CACHE = 'dagteljar-v4';
+const CACHE = 'dagteljar-v5';
 const SHELL = [
   './',
   './index.html',
@@ -30,8 +30,8 @@ self.addEventListener('fetch', e => {
   // Bilete frå kontoen endrar seg aldri (kvar id er eitt bilete), så dei kan lagrast for bruk utan nett.
   const isPhoto = url.hostname === 'dagteljar.brannlogg-admin.workers.dev' && url.pathname.startsWith('/bilete/');
   if (url.origin !== location.origin && !isFont && !isPhoto) return;
-  // Versjonsfila skal alltid kome rett frå nettet.
-  if (url.pathname.endsWith('/versjon.txt')) return;
+  // Versjonsfila og widget-skriptet skal alltid kome rett frå nettet.
+  if (url.pathname.endsWith('/versjon.txt') || url.pathname.endsWith('/scriptable.js')) return;
 
   if (req.mode === 'navigate') {
     // «no-cache» spør nettstaden kvar gong, så ein ny versjon kjem med ein gong og ikkje etter ti minutt.

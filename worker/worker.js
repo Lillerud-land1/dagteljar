@@ -54,7 +54,15 @@ async function rute(req, env, url) {
   if (m === 'POST' && p === '/konto') return lagKonto(req, env);
   if (m === 'POST' && p === '/logg-inn') return loggInn(req, env);
 
+  const widget = /^\/widget\/([0-9a-f]{64})$/.exec(p);
+  if (widget && m === 'GET') return widgetData(req, env, widget[1]);
+
   const namn = await krevInnlogging(req, env);
+  if (m === 'POST' && p === '/widget-nokkel') return lagWidgetNokkel(env, namn);
+  if (m === 'DELETE' && p === '/widget-nokkel') {
+    await env.DB.prepare('DELETE FROM widgetnoklar WHERE namn = ?').bind(namn).run();
+    return svar({ ok: true });
+  }
   if (m === 'POST' && p === '/logg-ut') {
     await env.DB.prepare('DELETE FROM okter WHERE tokenhash = ?').bind(await sha256(token(req))).run();
     return svar({ ok: true });
@@ -167,6 +175,36 @@ async function lagreHending(req, env, namn, id) {
   await env.DB.prepare('INSERT INTO hendingar (namn, id, data, endra) VALUES (?, ?, ?, ?) ON CONFLICT (namn, id) DO UPDATE SET data = excluded.data, endra = excluded.endra')
     .bind(namn, id, JSON.stringify(data), endra).run();
   return svar({ ok: true, id, endra });
+}
+
+// ---------- Widget på startskjermen ----------
+// Kvar widget får si eiga lenkje som berre kan lese. Lenkja kan ikkje endre eller slette noko,
+// og «Slå av widget-lenkjene» i appen slettar alle saman.
+const MAKS_WIDGETNOKLAR = 10;
+
+async function lagWidgetNokkel(env, namn) {
+  const nokkel = hex(tilfeldig(32));
+  await env.DB.prepare('INSERT INTO widgetnoklar (hash, namn, laga) VALUES (?, ?, ?)').bind(await sha256(nokkel), namn, Date.now()).run();
+  await env.DB.prepare('DELETE FROM widgetnoklar WHERE namn = ? AND hash NOT IN (SELECT hash FROM widgetnoklar WHERE namn = ? ORDER BY laga DESC LIMIT ?)')
+    .bind(namn, namn, MAKS_WIDGETNOKLAR).run();
+  return svar({ nokkel }, 201);
+}
+
+async function widgetData(req, env, nokkel) {
+  await grense(env, 'widget:' + ip(req));
+  const rad = await env.DB.prepare('SELECT namn FROM widgetnoklar WHERE hash = ?').bind(await sha256(nokkel)).first();
+  if (!rad) throw new Feil(404, 'Widget-lenkja verkar ikkje lenger. Lag ei ny i Dagteljar under Konto.');
+  const { results } = await env.DB.prepare('SELECT data FROM hendingar WHERE namn = ?').bind(rad.namn).all();
+  // Berre det widgeten treng: ingen bilete-id-ar eller anna.
+  const hendingar = results.map(r => {
+    const d = JSON.parse(r.data);
+    return {
+      title: d.title, kind: d.kind, date: d.date, time: d.time, repeat: d.repeat, rule: d.rule,
+      color: d.color, art: d.photo && typeof d.photo.art === 'string' ? d.photo.art : null,
+      place: d.place || null, showAge: !!d.showAge,
+    };
+  });
+  return svar({ hendingar });
 }
 
 // ---------- Bilete ----------

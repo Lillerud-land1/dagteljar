@@ -32,6 +32,14 @@ CREATE TABLE IF NOT EXISTS bilete (
 );
 CREATE INDEX IF NOT EXISTS bilete_namn ON bilete(namn);
 
+-- Lenkjer som berre kan lese nedteljingane, til widgeten på startskjermen. Berre hashen blir lagra.
+CREATE TABLE IF NOT EXISTS widgetnoklar (
+  hash  TEXT PRIMARY KEY,
+  namn  TEXT NOT NULL,
+  laga  INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS widgetnoklar_namn ON widgetnoklar(namn, laga);
+
 CREATE TABLE IF NOT EXISTS forsok (
   namn TEXT NOT NULL,
   ts   INTEGER NOT NULL
