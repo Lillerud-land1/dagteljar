@@ -1,5 +1,5 @@
 // Offline-støtte: sida blir henta frå nettet når det går, elles frå lageret.
-const CACHE = 'dagteljar-v2';
+const CACHE = 'dagteljar-v3';
 const SHELL = [
   './',
   './index.html',

@@ -105,7 +105,6 @@ svg{display:block}
 .group-head{display:flex;align-items:baseline;gap:8px}
 .group h2{margin:0;font-size:21px;font-weight:700;letter-spacing:-.005em;text-wrap:balance}
 .count{font-size:15px;color:var(--ink-2);font-weight:500;font-variant-numeric:tabular-nums}
-.lede{margin:-6px 0 0;color:var(--ink-2);font-size:15px;max-width:60ch}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(152px,1fr));gap:14px}
 
 /* Kalenderside */
@@ -149,18 +148,26 @@ svg{display:block}
 .blank h2{margin:0;font-size:22px;font-weight:700;text-wrap:balance}
 .blank p{margin:0;color:var(--ink-2);max-width:52ch}
 
-/* Forslag */
-.sugg-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}
-.sugg{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:12px;border:1px dashed var(--line);background:transparent;color:var(--ink);cursor:pointer;text-align:left;transition:background .15s}
-.sugg:hover{background:var(--paper)}
-.sugg .mini{width:44px;box-shadow:none;border:1px solid var(--line)}
-.sugg .mini-m{font-size:10px;min-height:16px}
-.sugg .mini-d{font-size:23px;min-height:28px}
-.sugg-txt{display:flex;flex-direction:column;min-width:0}
-.sugg-t{font-weight:600;font-size:15px;line-height:1.25}
-.sugg-s{font-size:13.5px;color:var(--ink-2)}
-.sugg.starter .mini{--band:var(--ink)}
-.sugg.starter .mini-d{color:var(--ink)}
+/* «Ny»-arket: tom nedteljing eller eit forslag. Forslaga er små kalendersider med biletet øvst. */
+.pick{display:flex;flex-direction:column;gap:16px;padding:18px 20px 24px}
+.pick-blank{display:flex;align-items:center;gap:14px;width:100%;padding:12px 14px;border:1.5px dashed var(--line);border-radius:12px;background:transparent;color:var(--ink);cursor:pointer;text-align:left}
+.pick-blank:hover{background:var(--field)}
+.pick-plus{display:grid;place-items:center;flex:none;width:44px;height:44px;border-radius:50%;background:var(--ink);color:var(--paper)}
+.pick-plus svg{width:22px;height:22px}
+.pick-txt{display:flex;flex-direction:column;min-width:0}
+.pick-t{font-weight:700;font-size:16px;line-height:1.25}
+.pick-s{font-size:14px;color:var(--ink-2)}
+.pick h3{margin:8px 0 -4px;font-size:18px;font-weight:700}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px}
+.tile{display:flex;flex-direction:column;padding:0;border:0;border-radius:var(--r-page);background:var(--field);color:var(--ink);overflow:hidden;cursor:pointer;text-align:left;transition:transform .12s}
+.tile:active{transform:scale(.97)}
+.tile-art{position:relative;display:block;aspect-ratio:16/10;background:var(--band)}
+.tile-art svg{width:100%;height:100%}
+.tile .perf{--ground:var(--paper)}
+.tile-txt{display:flex;flex-direction:column;gap:1px;padding:3px 12px 12px}
+.tile-t{font-weight:700;font-size:15.5px;line-height:1.25}
+.tile-s{font-size:13.5px;color:var(--ink-2)}
+.tile.done .tile-art{opacity:.5}
 
 #main{display:flex;flex-direction:column;gap:34px}
 .foot{margin:0;font-size:13.5px;color:var(--ink-2);max-width:62ch}
@@ -261,7 +268,7 @@ input[type="date"].input,input[type="time"].input{-webkit-appearance:none;appear
 
 @media (prefers-reduced-motion:reduce){
   .sheet{animation:none}
-  .page,.btn,.toast,.sugg{transition:none}
+  .page,.btn,.toast,.tile{transition:none}
 }
 </style>
 
@@ -329,8 +336,6 @@ input[type="date"].input,input[type="time"].input{-webkit-appearance:none;appear
     image: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2.5" stroke="currentColor" stroke-width="1.8" fill="none"/><circle cx="9" cy="10" r="1.8" fill="currentColor"/><path d="M4 17.5l5-5 4 4 3-3 4.5 4.5" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linejoin="round"/></svg>',
     edit: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16v4z" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linejoin="round"/><path d="M13.5 6.5l4 4" stroke="currentColor" stroke-width="1.8"/></svg>',
     trash: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4.5h6V7M6.5 7l1 13h9l1-13" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linejoin="round" stroke-linecap="round"/></svg>',
-    cake: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h16v-7a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v7z" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M4 15.2c2 1.5 4 1.5 5.3 0 1.4 1.5 4 1.5 5.4 0 1.3 1.5 3.3 1.5 5.3 0M12 11V7.5" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round"/><path d="M12 3c1 1.1 1.3 2 .7 2.7-.4.4-1 .4-1.4 0-.6-.7-.3-1.6.7-2.7z" fill="currentColor"/></svg>',
-    paw: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 12.2c-2.9 0-5.6 2.6-5.6 5.2 0 1.7 1.4 2.4 3 2.2 1-.1 1.7-.5 2.6-.5s1.6.4 2.6.5c1.6.2 3-.5 3-2.2 0-2.6-2.7-5.2-5.6-5.2z" fill="currentColor"/><ellipse cx="5.6" cy="10.6" rx="1.9" ry="2.4" fill="currentColor"/><ellipse cx="18.4" cy="10.6" rx="1.9" ry="2.4" fill="currentColor"/><ellipse cx="9.2" cy="6.4" rx="1.9" ry="2.5" fill="currentColor"/><ellipse cx="14.8" cy="6.4" rx="1.9" ry="2.5" fill="currentColor"/></svg>',
     user: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8.5" r="4" stroke="currentColor" stroke-width="1.9" fill="none"/><path d="M4.5 20c1.2-3.8 4-5.6 7.5-5.6s6.3 1.8 7.5 5.6" stroke="currentColor" stroke-width="1.9" fill="none" stroke-linecap="round"/></svg>',
   };
 
@@ -910,24 +915,35 @@ input[type="date"].input,input[type="time"].input{-webkit-appearance:none;appear
     return { title: t.title, kind: 'down', date: ymd(d), time: '', repeat: { unit: 'year', every: 1 }, rule: null, color: t.color, photo: { art: t.art }, template: t.key };
   }
 
-  function suggHTML(now) {
-    const today = dateOnly(now);
-    const used = new Set(S.events.map(e => e.template).filter(Boolean));
-    const tiles = TEMPLATES.filter(t => !used.has(t.key))
-      .map(t => ({ t, st: status(tplEvent(t, today), now) }))
+  // Forslag utan fast dato: skjemaet opnar med biletet og innstillingane, du vel datoen sjølv.
+  const STARTERS = [
+    { key: 'bursdag', title: 'Bursdag', sub: 'Kvart år, med alder', color: 'lyng', art: 'kake', init: () => ({ kind: 'down', repeat: { unit: 'year', every: 1 }, showAge: true, placeholder: 'Til dømes «Bursdag til Emma»' }) },
+    { key: 'sidan', title: 'Dagar sidan', sub: 'Til dømes då hunden kom', color: 'gran', art: 'pote', init: today => ({ kind: 'up', date: ymd(today), placeholder: 'Til dømes «Hunden kom i hus»' }) },
+    { key: 'ferie', title: 'Ferie', sub: 'Tel ned til avreise', color: 'fjord', art: 'sol', init: () => ({ kind: 'down', placeholder: 'Til dømes «Ferie i Syden»' }) },
+    { key: 'fest', title: 'Fest', sub: 'Tel ned til festen', color: 'rogn', art: 'ballong', init: () => ({ kind: 'down', placeholder: 'Til dømes «Sommarfest på hytta»' }) },
+  ];
+
+  function tileHTML(attr, title, sub, art, done) {
+    return `<button type="button" class="tile${done ? ' done' : ''}" ${attr}>`
+      + `<span class="tile-art" aria-hidden="true">${artSVG(art)}</span><span class="perf" aria-hidden="true"></span>`
+      + `<span class="tile-txt"><span class="tile-t">${esc(title)}</span><span class="tile-s">${esc(sub)}</span></span></button>`;
+  }
+
+  function openPick() {
+    const now = new Date(), today = dateOnly(now);
+    const holidays = TEMPLATES.map(t => ({ t, st: status(tplEvent(t, today), now), ev: S.events.find(e => e.template === t.key) }))
       .sort((a, b) => a.st.days - b.st.days)
-      .map(({ t, st }) => `<button type="button" class="sugg" data-tpl="${t.key}" style="--band:var(--c-${t.color})">`
-        + `<span class="mini" aria-hidden="true"><span class="mini-m">${MON_S[st.occ.getMonth()]}</span><span class="mini-d">${st.occ.getDate()}</span></span>`
-        + `<span class="sugg-txt"><span class="sugg-t">${esc(t.title)}</span><span class="sugg-s">${inText(st.days)}, kvart år</span></span></button>`);
-    const starters = [
-      ['bursdag', 'Bursdag', 'Tel ned kvart år og vis alderen', ICON.cake],
-      ['sidan', 'Dagar sidan', 'Til dømes då hunden kom i hus', ICON.paw],
-    ].map(([k, title, sub, icon]) => `<button type="button" class="sugg starter" data-start="${k}">`
-      + `<span class="mini" aria-hidden="true"><span class="mini-m"></span><span class="mini-d">${icon}</span></span>`
-      + `<span class="sugg-txt"><span class="sugg-t">${title}</span><span class="sugg-s">${sub}</span></span></button>`);
-    return `<section class="group"><div class="group-head"><h2>Legg til fleire</h2></div>`
-      + `<p class="lede">Trykk på eit forslag for å fylle ut skjemaet. Du kan endre namn, dato, farge og bilete før du lagrar.</p>`
-      + `<div class="sugg-grid">${starters.concat(tiles).join('')}</div></section>`;
+      .map(({ t, st, ev }) => ev
+        ? tileHTML(`data-open="${esc(ev.id)}"`, t.title, 'Alt lagt til', t.art, true)
+        : tileHTML(`data-tpl="${t.key}"`, t.title, cap(inText(st.days)), t.art, false));
+    const starters = STARTERS.map(s => tileHTML(`data-start="${s.key}"`, s.title, s.sub, s.art, false));
+    showLayer(`<div class="pick">`
+      + `<div class="form-head"><h2 id="sheetTitle">Ny nedteljing</h2><button type="button" class="x plain" data-close aria-label="Lukk">${ICON.x}</button></div>`
+      + `<button type="button" class="pick-blank" data-new><span class="pick-plus">${ICON.plus}</span>`
+      + `<span class="pick-txt"><span class="pick-t">Tom nedteljing</span><span class="pick-s">Vel namn, dato og bilete sjølv</span></span></button>`
+      + `<h3>Forslag</h3>`
+      + `<div class="tiles">${starters.concat(holidays).join('')}</div>`
+      + `</div>`, 'pick');
   }
 
   function render() {
@@ -957,7 +973,7 @@ input[type="date"].input,input[type="time"].input{-webkit-appearance:none;appear
       html += `<section><div class="blank"><span class="band"></span><span class="perf" aria-hidden="true"></span><div class="blank-in"><h2>Hentar nedteljingane dine</h2><p>Det tek berre eit augeblikk.</p></div></div></section>`;
     } else if (!hero) {
       html += `<section><div class="blank"><span class="band"></span><span class="perf" aria-hidden="true"></span><div class="blank-in">`
-        + `<h2>Ingen nedteljingar enno</h2><p>Legg til ein bursdag, jula eller dagen hunden kom i hus. Forslaga under er ein grei stad å byrje.</p>`
+        + `<h2>Ingen nedteljingar enno</h2><p>Legg til ein bursdag, jula eller dagen hunden kom i hus. Under «Ny» finn du forslag med ferdige bilete.</p>`
         + (S.canWrite ? `<button type="button" class="btn btn-primary" data-new>${ICON.plus}<span>Ny nedteljing</span></button>` : '')
         + `</div></div></section>`;
     } else {
@@ -967,7 +983,6 @@ input[type="date"].input,input[type="time"].input{-webkit-appearance:none;appear
     if (laterDown.length) html += groupHTML('Seinare', laterDown, now);
     const restUp = ups.filter(r => r !== hero);
     if (restUp.length) html += groupHTML('Tel opp', restUp, now);
-    if (S.canWrite && !S.loading) html += suggHTML(now);
 
     if (html !== lastMain) { main.innerHTML = html; lastMain = html; }
 
@@ -1334,24 +1349,25 @@ input[type="date"].input,input[type="time"].input{-webkit-appearance:none;appear
 
   // ---------- Hendingar ----------
   main.addEventListener('click', e => {
-    const el = e.target.closest('[data-open],[data-tpl],[data-start],[data-new],[data-login]');
+    const el = e.target.closest('[data-open],[data-new],[data-login]');
     if (!el) return;
-    const today = dateOnly(new Date());
     if (el.dataset.open) openDetail(el.dataset.open);
-    else if (el.dataset.tpl) { const t = TEMPLATES.find(x => x.key === el.dataset.tpl); if (t) openForm(tplEvent(t, today)); }
-    else if (el.dataset.start === 'bursdag') openForm({ kind: 'down', repeat: { unit: 'year', every: 1 }, showAge: true, color: 'lyng', photo: { art: 'kake' }, placeholder: 'Til dømes «Bursdag til Emma»' });
-    else if (el.dataset.start === 'sidan') openForm({ kind: 'up', color: 'gran', date: ymd(today), photo: { art: 'pote' }, placeholder: 'Til dømes «Hunden kom i hus»' });
-    else if ('new' in el.dataset) openForm();
+    else if ('new' in el.dataset) openPick();
     else if ('login' in el.dataset) openAccount('inn');
   });
-  $('#addBtn').addEventListener('click', () => openForm());
+  $('#addBtn').addEventListener('click', () => openPick());
   $('#kontoBtn').addEventListener('click', () => openAccount('inn'));
 
   layer.addEventListener('click', e => {
     if (e.target === layer) { closeLayer(); return; }
-    const el = e.target.closest('[data-close],[data-edit],[data-del],[data-kind],[data-unit],[data-art],[data-tab],[data-logout],[data-sync],#ruleClear');
+    const el = e.target.closest('[data-close],[data-edit],[data-del],[data-kind],[data-unit],[data-art],[data-tab],[data-logout],[data-sync],[data-new],[data-tpl],[data-start],[data-open],#ruleClear');
     if (!el) return;
+    const today = dateOnly(new Date());
     if ('close' in el.dataset) closeLayer();
+    else if ('new' in el.dataset) openForm();
+    else if (el.dataset.tpl) { const t = TEMPLATES.find(x => x.key === el.dataset.tpl); if (t) openForm(tplEvent(t, today)); }
+    else if (el.dataset.start) { const s = STARTERS.find(x => x.key === el.dataset.start); if (s) openForm({ ...s.init(today), color: s.color, photo: { art: s.art } }); }
+    else if (el.dataset.open) openDetail(el.dataset.open);
     else if (A && el.dataset.tab) { A.namn = $('#aNamn', layer).value; A.tab = el.dataset.tab; layer.firstElementChild.innerHTML = acctFormHTML(); $('#aNamn', layer).focus(); }
     else if ('logout' in el.dataset) logout();
     else if ('sync' in el.dataset) {
