@@ -3,6 +3,9 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
+# Versjonen endrar seg når kjelda gjer det. Appen samanliknar han med versjon.txt for å hente ny versjon utan omstart.
+VERSJON=$(cat dagteljar.html bygg.sh | sha1sum | cut -c1-12)
+
 {
   cat <<'HEAD'
 <!doctype html>
@@ -17,6 +20,7 @@ cd "$(dirname "$0")"
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Dagteljar">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="dagteljar-versjon" content="__VERSJON__">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
@@ -34,6 +38,7 @@ if ('serviceWorker' in navigator && location.protocol === 'https:') {
 </body>
 </html>
 TAIL
-} > index.html
+} | sed "s/__VERSJON__/$VERSJON/" > index.html
+echo "$VERSJON" > versjon.txt
 
-echo "Bygde index.html"
+echo "Bygde index.html (versjon $VERSJON)"
