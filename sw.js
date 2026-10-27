@@ -1,5 +1,5 @@
 // Offline-støtte: sida blir henta frå nettet når det går, elles frå lageret.
-const CACHE = 'dagteljar-v1';
+const CACHE = 'dagteljar-v2';
 const SHELL = [
   './',
   './index.html',
@@ -27,7 +27,9 @@ self.addEventListener('fetch', e => {
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
   const isFont = url.hostname === 'fonts.googleapis.com' || url.hostname === 'fonts.gstatic.com';
-  if (url.origin !== location.origin && !isFont) return;
+  // Bilete frå kontoen endrar seg aldri (kvar id er eitt bilete), så dei kan lagrast for bruk utan nett.
+  const isPhoto = url.hostname === 'dagteljar.brannlogg-admin.workers.dev' && url.pathname.startsWith('/bilete/');
+  if (url.origin !== location.origin && !isFont && !isPhoto) return;
 
   if (req.mode === 'navigate') {
     e.respondWith(

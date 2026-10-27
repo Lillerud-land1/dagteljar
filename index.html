@@ -79,7 +79,8 @@ svg{display:block}
 .wrap{max-width:1040px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 56px;display:flex;flex-direction:column;gap:30px}
 
 /* Topp */
-.top{display:flex;align-items:center;gap:14px}
+.top{display:flex;align-items:center;gap:10px}
+.top .brand{margin-left:4px}
 .mini{flex:none;width:50px;display:flex;flex-direction:column;border-radius:5px;overflow:hidden;background:var(--paper);box-shadow:var(--shadow);text-align:center}
 .mini-m{background:var(--band,var(--raud));color:var(--on-band);font-size:11px;font-weight:700;letter-spacing:.03em;line-height:1;padding:4px 0 3px;min-height:18px}
 .mini-d{display:grid;place-items:center;min-height:34px;font-family:var(--f-num);font-weight:800;font-size:28px;line-height:1;padding:2px 0 4px;font-variant-numeric:tabular-nums}
@@ -163,6 +164,27 @@ svg{display:block}
 
 #main{display:flex;flex-direction:column;gap:34px}
 .foot{margin:0;font-size:13.5px;color:var(--ink-2);max-width:62ch}
+
+/* Illustrasjonar */
+.has-photo .band:has(.art)::after,.d-media:has(.art)::after{background:linear-gradient(to top,rgba(8,10,16,.6),rgba(8,10,16,0) 45%)}
+.art{position:absolute;inset:0;display:block}
+.art svg{display:block;width:100%;height:100%}
+.art-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(70px,1fr));gap:8px}
+.art-opt{position:relative;aspect-ratio:16/10;padding:0;border:0;border-radius:8px;overflow:hidden;background:var(--field);color:var(--ink-2);font-size:13.5px;font-weight:600;cursor:pointer}
+.art-opt svg,.art-opt img{display:block;width:100%;height:100%;object-fit:cover}
+.art-opt.none{border:1.5px dashed var(--line);background:transparent}
+.art-opt[aria-pressed="true"]{box-shadow:0 0 0 2px var(--paper),0 0 0 4.5px var(--ink)}
+
+/* Konto */
+.icon-btn{position:relative;display:grid;place-items:center;flex:none;width:44px;height:44px;border:1px solid var(--line);border-radius:50%;background:var(--paper);color:var(--ink);cursor:pointer}
+.icon-btn svg{width:21px;height:21px}
+.icon-btn.on::after{content:"";position:absolute;top:1px;right:1px;width:11px;height:11px;border-radius:50%;background:var(--c-gran);box-shadow:0 0 0 2px var(--ground)}
+.strip{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;padding:12px 14px;border-radius:12px;background:var(--paper);box-shadow:var(--shadow)}
+.strip p{margin:0;flex:1 1 220px;font-size:15px}
+.strip .btn{min-height:40px}
+.acct{display:flex;flex-direction:column;gap:16px;padding:18px 20px 0}
+.acct p{margin:0}
+.muted{color:var(--ink-2)}
 
 /* Ark (detaljar og skjema) */
 .layer{position:fixed;inset:0;z-index:40;display:flex;align-items:flex-end;justify-content:center;background:var(--backdrop);padding-top:max(24px,env(safe-area-inset-top,0px))}
@@ -250,6 +272,7 @@ input[type="date"].input,input[type="time"].input{-webkit-appearance:none;appear
       <h1>Dagteljar</h1>
       <p id="todayText">&nbsp;</p>
     </div>
+    <button class="icon-btn" id="kontoBtn" type="button" aria-label="Konto og synk" hidden></button>
     <button class="btn btn-primary" id="addBtn" type="button" aria-label="Ny nedteljing" hidden></button>
   </header>
   <main id="main"></main>
@@ -283,15 +306,22 @@ input[type="date"].input,input[type="time"].input{-webkit-appearance:none;appear
   const UNIT_NAMES = { day: 'dag', week: 'veke', month: 'månad', year: 'år' };
 
   const TEMPLATES = [
-    { key: 'halloween', title: 'Halloween', m: 9, d: 31, color: 'rogn' },
-    { key: 'farsdag', title: 'Farsdag', rule: { type: 'nth', month: 10, weekday: 0, nth: 2 }, color: 'fjord' },
-    { key: 'jul', title: 'Julaftan', m: 11, d: 24, color: 'raud' },
-    { key: 'nyttar', title: 'Nyttårsaftan', m: 11, d: 31, color: 'natt' },
-    { key: 'morsdag', title: 'Morsdag', rule: { type: 'nth', month: 1, weekday: 0, nth: 2 }, color: 'lyng' },
-    { key: 'paske', title: 'Påske', rule: { type: 'easter', offset: 0 }, color: 'gran' },
-    { key: '17mai', title: '17. mai', m: 4, d: 17, color: 'raud' },
-    { key: 'sankthans', title: 'Sankthansaftan', m: 5, d: 23, color: 'gran' },
+    { key: 'halloween', title: 'Halloween', m: 9, d: 31, color: 'rogn', art: 'graskar' },
+    { key: 'farsdag', title: 'Farsdag', rule: { type: 'nth', month: 10, weekday: 0, nth: 2 }, color: 'fjord', art: 'gave' },
+    { key: 'jul', title: 'Julaftan', m: 11, d: 24, color: 'raud', art: 'jultre' },
+    { key: 'nyttar', title: 'Nyttårsaftan', m: 11, d: 31, color: 'natt', art: 'fyrverkeri' },
+    { key: 'morsdag', title: 'Morsdag', rule: { type: 'nth', month: 1, weekday: 0, nth: 2 }, color: 'lyng', art: 'hjarte' },
+    { key: 'paske', title: 'Påske', rule: { type: 'easter', offset: 0 }, color: 'gran', art: 'egg' },
+    { key: '17mai', title: '17. mai', m: 4, d: 17, color: 'raud', art: 'flagg' },
+    { key: 'sankthans', title: 'Sankthansaftan', m: 5, d: 23, color: 'gran', art: 'bal' },
   ];
+
+  // Synk med konto finst berre i appen på GitHub (ikkje inne i claude.ai, som har eiga lagring).
+  const CLOUD_OK = !window.claude && /^https?:$/.test(location.protocol);
+  const API = /^(localhost|127\.0\.0\.1)$/.test(location.hostname) ? 'http://localhost:8787' : 'https://dagteljar.brannlogg-admin.workers.dev';
+  const ACC_KEY = 'dagteljar.konto';
+  const CLOUD_KEY = 'dagteljar.sky';
+  const HEX32 = /^[0-9a-f]{32}$/i;
 
   const ICON = {
     plus: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" fill="none"/></svg>',
@@ -301,7 +331,142 @@ input[type="date"].input,input[type="time"].input{-webkit-appearance:none;appear
     trash: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4.5h6V7M6.5 7l1 13h9l1-13" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linejoin="round" stroke-linecap="round"/></svg>',
     cake: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h16v-7a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v7z" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M4 15.2c2 1.5 4 1.5 5.3 0 1.4 1.5 4 1.5 5.4 0 1.3 1.5 3.3 1.5 5.3 0M12 11V7.5" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round"/><path d="M12 3c1 1.1 1.3 2 .7 2.7-.4.4-1 .4-1.4 0-.6-.7-.3-1.6.7-2.7z" fill="currentColor"/></svg>',
     paw: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 12.2c-2.9 0-5.6 2.6-5.6 5.2 0 1.7 1.4 2.4 3 2.2 1-.1 1.7-.5 2.6-.5s1.6.4 2.6.5c1.6.2 3-.5 3-2.2 0-2.6-2.7-5.2-5.6-5.2z" fill="currentColor"/><ellipse cx="5.6" cy="10.6" rx="1.9" ry="2.4" fill="currentColor"/><ellipse cx="18.4" cy="10.6" rx="1.9" ry="2.4" fill="currentColor"/><ellipse cx="9.2" cy="6.4" rx="1.9" ry="2.5" fill="currentColor"/><ellipse cx="14.8" cy="6.4" rx="1.9" ry="2.5" fill="currentColor"/></svg>',
+    user: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8.5" r="4" stroke="currentColor" stroke-width="1.9" fill="none"/><path d="M4.5 20c1.2-3.8 4-5.6 7.5-5.6s6.3 1.8 7.5 5.6" stroke="currentColor" stroke-width="1.9" fill="none" stroke-linecap="round"/></svg>',
   };
+
+  // ---------- Illustrasjonar (ferdige bilete å velje mellom) ----------
+  const r1 = n => Math.round(n * 10) / 10;
+  function seeded(seed) { let s = seed; return () => (s = (s * 16807) % 2147483647) / 2147483647; }
+  function scatter(seed, n, box, draw) {
+    const r = seeded(seed);
+    let out = '';
+    for (let i = 0; i < n; i++) out += draw(r1(box[0] + r() * (box[2] - box[0])), r1(box[1] + r() * (box[3] - box[1])), r, i);
+    return out;
+  }
+  function starPts(cx, cy, R, r) {
+    const p = [];
+    for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + (i * Math.PI) / 5, q = i % 2 ? r : R; p.push(`${r1(cx + Math.cos(a) * q)},${r1(cy + Math.sin(a) * q)}`); }
+    return p.join(' ');
+  }
+  const heart = (x, y, s, fill, rot = 0) => `<path transform="translate(${x} ${y}) rotate(${rot}) scale(${s})" fill="${fill}" d="M0 12C-16 2-14-12-6-12-2.5-12-.8-9.5 0-7.5.8-9.5 2.5-12 6-12 14-12 16 2 0 12Z"/>`;
+  const paw = (x, y, s, rot, fill, op = 1) => `<g transform="translate(${x} ${y}) rotate(${rot}) scale(${s})" fill="${fill}" opacity="${op}"><path d="M0 1.5c-5 0-9.5 4.4-9.5 8.8 0 2.9 2.4 4.1 5.1 3.7 1.7-.2 2.9-.8 4.4-.8s2.7.6 4.4.8c2.7.4 5.1-.8 5.1-3.7 0-4.4-4.5-8.8-9.5-8.8z"/><ellipse cx="-10.6" cy="-1.5" rx="3.2" ry="4.1"/><ellipse cx="10.6" cy="-1.5" rx="3.2" ry="4.1"/><ellipse cx="-4.4" cy="-8.5" rx="3.2" ry="4.2"/><ellipse cx="4.4" cy="-8.5" rx="3.2" ry="4.2"/></g>`;
+  function burst(cx, cy, R, col, n) {
+    let s = '';
+    for (let i = 0; i < n; i++) {
+      const a = (i / n) * Math.PI * 2, c = Math.cos(a), si = Math.sin(a);
+      s += `<line x1="${r1(cx + c * R * 0.38)}" y1="${r1(cy + si * R * 0.38)}" x2="${r1(cx + c * R)}" y2="${r1(cy + si * R)}" stroke="${col}" stroke-width="1.8" stroke-linecap="round"/><circle cx="${r1(cx + c * (R + 3.2))}" cy="${r1(cy + si * (R + 3.2))}" r="1.2" fill="${col}"/>`;
+    }
+    return s + `<circle cx="${cx}" cy="${cy}" r="2" fill="${col}"/>`;
+  }
+  const confettiBits = seed => scatter(seed, 26, [4, 4, 156, 96], (x, y, r, i) => {
+    const c = ['#E23D3D', '#3E8EDE', '#FFD23F', '#8BD17C', '#B26BE0'][i % 5];
+    return i % 3 ? `<rect x="${x}" y="${y}" width="4.5" height="2" rx="1" fill="${c}" transform="rotate(${Math.round(r() * 180)} ${x} ${y})"/>` : `<circle cx="${x}" cy="${y}" r="1.5" fill="${c}"/>`;
+  });
+  const dotsAt = (list, r) => list.map(([x, y, c]) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${c}"/>`).join('');
+
+  const ART = {
+    kake: () => `<rect width="160" height="100" fill="#F9C9D4"/>${confettiBits(7)}
+      <ellipse cx="80" cy="87" rx="48" ry="6" fill="#FFFFFF"/>
+      <rect x="42" y="60" width="76" height="27" rx="3" fill="#7B4A2E"/>
+      <path d="M42 62H118V69q-5 6-10 0q-5 5-10 0q-5 6-10 0q-4 5-9 0q-5 6-10 0q-5 5-10 0q-4 5-9 0q-4 6-8 0Z" fill="#FFF6EE"/>
+      <rect x="54" y="40" width="52" height="21" rx="3" fill="#F27A9B"/>
+      <path d="M54 41H106V47q-4 5-9 0q-4 4-8 0q-4 5-9 0q-4 4-8 0q-4 5-9 0q-4 4-9 0Z" fill="#FFFFFF"/>
+      ${[[66, '#6EC1E4'], [78, '#FFD23F'], [90, '#8BD17C']].map(([x, c]) => `<rect x="${x}" y="27" width="4" height="14" rx="1" fill="${c}"/><path d="M${x + 2} 17C${x + 5} 21 ${x + 5} 24 ${x + 2} 25C${x - 1} 24 ${x - 1} 21 ${x + 2} 17Z" fill="#FFB020"/>`).join('')}
+      ${dotsAt([[62, 54, '#FFFFFF'], [74, 57, '#FFD23F'], [88, 54, '#FFFFFF'], [98, 57, '#6EC1E4']], 1.5)}`,
+    gave: () => `<rect width="160" height="100" fill="#DCD5F7"/>
+      ${scatter(17, 12, [6, 6, 154, 94], (x, y, r, i) => `<polygon points="${starPts(x, y, 3.4, 1.4)}" fill="${['#FFD23F', '#FFFFFF', '#F27A9B'][i % 3]}"/>`)}
+      <rect x="56" y="50" width="48" height="36" rx="2" fill="#5B6CF0"/>
+      <rect x="52" y="42" width="56" height="11" rx="2" fill="#4A59D8"/>
+      <rect x="77" y="42" width="6" height="44" fill="#FFD23F"/>
+      <path d="M80 42C70 28 58 34 66 41C70 44 76 43 80 42ZM80 42C90 28 102 34 94 41C90 44 84 43 80 42Z" fill="#FFD23F"/>
+      <circle cx="80" cy="42" r="3.2" fill="#F2B600"/>`,
+    ballong: () => `<rect width="160" height="100" fill="#FFF3D6"/>${confettiBits(21)}
+      <path d="M60 57C62 70 76 76 80 94M84 49C82 64 84 76 80 94M106 59C102 72 88 78 80 94" stroke="#9A8F80" stroke-width="1" fill="none"/>
+      ${[[60, 38, '#E23D3D'], [84, 30, '#3E8EDE'], [106, 40, '#8BD17C']].map(([x, y, c]) => `<ellipse cx="${x}" cy="${y}" rx="13" ry="16" fill="${c}"/><polygon points="${x - 2.5},${y + 18.5} ${x + 2.5},${y + 18.5} ${x},${y + 15}" fill="${c}"/><ellipse cx="${x - 4.5}" cy="${y - 6}" rx="3" ry="5" fill="#FFFFFF" opacity="0.35" transform="rotate(20 ${x - 4.5} ${y - 6})"/>`).join('')}`,
+    jultre: () => `<rect width="160" height="100" fill="#17284A"/>
+      <circle cx="28" cy="22" r="9" fill="#F4E9C8"/><circle cx="32" cy="19" r="8" fill="#17284A"/>
+      ${scatter(3, 30, [2, 2, 158, 78], (x, y, r) => `<circle cx="${x}" cy="${y}" r="${r1(0.6 + r() * 1.1)}" fill="#FFFFFF" opacity="${r1(0.4 + r() * 0.5)}"/>`)}
+      <path d="M0 84Q40 76 80 82T160 80V100H0Z" fill="#EEF3FA"/>
+      <rect x="76" y="80" width="8" height="8" fill="#6B4226"/>
+      <polygon points="80,50 114,84 46,84" fill="#2E8B57"/>
+      <polygon points="80,36 106,68 54,68" fill="#35A066"/>
+      <polygon points="80,24 98,52 62,52" fill="#3DB372"/>
+      <polygon points="${starPts(80, 23, 7.5, 3.2)}" fill="#FFD23F"/>
+      ${dotsAt([[72, 46, '#E23D3D'], [88, 44, '#FFD23F'], [66, 62, '#FFD23F'], [93, 60, '#E23D3D'], [80, 56, '#6EC1E4'], [58, 79, '#E23D3D'], [101, 78, '#6EC1E4'], [76, 74, '#FFD23F'], [90, 72, '#E23D3D']], 2.6)}
+      <rect x="106" y="78" width="15" height="11" rx="1" fill="#E23D3D"/><rect x="112.5" y="78" width="2" height="11" fill="#FFD23F"/><rect x="106" y="82" width="15" height="2" fill="#FFD23F"/>
+      <rect x="38" y="80" width="12" height="9" rx="1" fill="#6EC1E4"/><rect x="43" y="80" width="2" height="9" fill="#FFFFFF"/>`,
+    graskar: () => `<rect width="160" height="100" fill="#2A1A40"/>
+      ${scatter(11, 18, [2, 2, 158, 60], (x, y, r) => `<circle cx="${x}" cy="${y}" r="${r1(0.5 + r() * 0.9)}" fill="#FFFFFF" opacity="${r1(0.4 + r() * 0.5)}"/>`)}
+      <circle cx="126" cy="24" r="13" fill="#F6E7B0"/>
+      <path d="M108 42q4-4 8 0q2-3 4 0q2-3 4 0q4-4 8 0q-6 0-12 4q-6-4-12-4Z" fill="#120A1E"/>
+      <path d="M0 86Q50 74 100 84T160 82V100H0Z" fill="#1A1028"/>
+      <path d="M77 48q1-7 6-9" stroke="#4E7A2C" stroke-width="4" stroke-linecap="round" fill="none"/>
+      <ellipse cx="62" cy="68" rx="17" ry="19" fill="#D9631A"/>
+      <ellipse cx="94" cy="68" rx="17" ry="19" fill="#D9631A"/>
+      <ellipse cx="78" cy="68" rx="19" ry="21" fill="#F28C28"/>
+      <polygon points="65,64 74,64 69.5,56" fill="#FFD23F"/>
+      <polygon points="82,64 91,64 86.5,56" fill="#FFD23F"/>
+      <polygon points="76,70 80,70 78,66" fill="#FFD23F"/>
+      <path d="M64 73L69 75L72 72L75 76L78 72L81 76L84 72L87 75L92 73Q87 84 78 84Q69 84 64 73Z" fill="#FFD23F"/>`,
+    fyrverkeri: () => `<rect width="160" height="100" fill="#0F1733"/>
+      ${scatter(5, 22, [2, 2, 158, 70], (x, y, r) => `<circle cx="${x}" cy="${y}" r="0.7" fill="#FFFFFF" opacity="${r1(0.3 + r() * 0.5)}"/>`)}
+      ${burst(52, 34, 18, '#FFD23F', 16)}${burst(104, 26, 14, '#FF5A8A', 14)}${burst(128, 54, 11, '#6EE7F0', 12)}${burst(28, 60, 9, '#8BD17C', 10)}
+      <path d="M0 100V80h10v-8h8v12h8V70h10v14h6v-6h10v22ZM58 100V76h12v-6h6v6h8v24ZM92 100V82h10V68h12v14h8v-8h10v8h6v-6h8v-4h14v28Z" fill="#070B1C"/>
+      <rect y="94" width="160" height="6" fill="#070B1C"/>
+      ${[[6, 86], [14, 90], [30, 76], [30, 86], [46, 88], [62, 82], [72, 90], [96, 88], [106, 74], [106, 84], [126, 86], [150, 80], [150, 90]].map(([x, y]) => `<rect x="${x}" y="${y}" width="2" height="2" fill="#FFD23F" opacity="0.85"/>`).join('')}`,
+    flagg: () => `<rect width="160" height="100" fill="#BFE0FF"/>
+      <ellipse cx="128" cy="22" rx="16" ry="6" fill="#FFFFFF"/><ellipse cx="138" cy="18" rx="10" ry="6" fill="#FFFFFF"/><ellipse cx="24" cy="30" rx="12" ry="4.5" fill="#FFFFFF" opacity="0.8"/>
+      <path d="M0 88Q40 80 80 86T160 84V100H0Z" fill="#6DBE5B"/>
+      <rect x="40" y="14" width="3" height="80" fill="#8C9196"/><circle cx="41.5" cy="13" r="3" fill="#E7C55A"/>
+      <rect x="43" y="18" width="66" height="48" fill="#BA0C2F"/>
+      <rect x="61" y="18" width="12" height="48" fill="#FFFFFF"/><rect x="43" y="36" width="66" height="12" fill="#FFFFFF"/>
+      <rect x="64" y="18" width="6" height="48" fill="#00205B"/><rect x="43" y="39" width="66" height="6" fill="#00205B"/>
+      <rect x="78" y="18" width="10" height="48" fill="#FFFFFF" opacity="0.1"/><rect x="99" y="18" width="10" height="48" fill="#000000" opacity="0.08"/>
+      ${dotsAt([[116, 92, '#FFFFFF'], [124, 90, '#FFD23F'], [132, 93, '#FFFFFF'], [22, 93, '#FFD23F'], [30, 91, '#FFFFFF']], 2)}`,
+    egg: () => `<rect width="160" height="100" fill="#FFF0B3"/>
+      ${scatter(13, 10, [6, 6, 154, 40], (x, y) => `<circle cx="${x}" cy="${y}" r="1.6" fill="#FFFFFF" opacity="0.8"/>`)}
+      <ellipse cx="62" cy="64" rx="12" ry="15" fill="#F6A5C0"/><path d="M52 63l4-4 4 4 4-4 4 4 4-4" stroke="#FFFFFF" stroke-width="2.4" fill="none" stroke-linejoin="round"/>
+      <ellipse cx="88" cy="60" rx="12" ry="15" fill="#8FD3F4"/>${dotsAt([[84, 54, '#FFFFFF'], [92, 56, '#FFFFFF'], [86, 64, '#FFFFFF'], [94, 66, '#FFFFFF'], [82, 70, '#FFFFFF']], 1.8)}
+      <ellipse cx="112" cy="66" rx="11" ry="14" fill="#B9E28C"/><rect x="101" y="63" width="22" height="4" fill="#FFFFFF" opacity="0.9"/>
+      <circle cx="134" cy="70" r="10" fill="#FFD23F"/><circle cx="137" cy="57" r="7" fill="#FFD23F"/><circle cx="139.5" cy="55.5" r="1.3" fill="#2A2A2A"/><polygon points="143,57 148,58.5 143,60" fill="#F28C28"/><path d="M128 70q4-5 9-1" stroke="#E7B800" stroke-width="2" fill="none" stroke-linecap="round"/>
+      <path d="M0 78${'l4-7 4 7'.repeat(20)}V100H0Z" fill="#8BC34A"/>`,
+    bal: () => `<rect width="160" height="100" fill="#F7A65E"/><rect width="160" height="34" fill="#E9806A"/><rect y="34" width="160" height="12" fill="#F29466"/>
+      <circle cx="118" cy="62" r="15" fill="#FFD98A"/>
+      <rect y="62" width="160" height="38" fill="#3B5B8C"/>
+      ${[[104, 68, 28], [110, 74, 16], [100, 80, 22], [112, 86, 10]].map(([x, y, w]) => `<rect x="${x}" y="${y}" width="${w}" height="1.6" rx="0.8" fill="#FFD98A" opacity="0.7"/>`).join('')}
+      <path d="M0 74Q36 64 84 76L92 100H0Z" fill="#2B2F45"/>
+      <path d="M36 74l22-8M36 66l22 8" stroke="#5A3A22" stroke-width="3.2" stroke-linecap="round"/>
+      <path d="M47 70C36 62 40 48 47 38C49 48 55 46 54 36C62 46 60 62 47 70Z" fill="#FF7A1A"/>
+      <path d="M47 70C41 64 43 56 47 50C49 56 52 55 52 50C55 58 53 66 47 70Z" fill="#FFD23F"/>
+      ${dotsAt([[56, 30, '#FFD23F'], [42, 26, '#FFD23F'], [60, 22, '#FFD23F'], [50, 18, '#FFD23F']], 1.2)}`,
+    hjarte: () => `<rect width="160" height="100" fill="#FFD6DE"/>
+      ${heart(30, 26, 0.45, '#F59AB0', -14)}${heart(132, 22, 0.55, '#F59AB0', 12)}${heart(126, 76, 0.4, '#F7B6C5', -8)}${heart(28, 78, 0.5, '#F7B6C5', 10)}
+      ${heart(80, 52, 1.9, '#E63956')}
+      <ellipse cx="68" cy="40" rx="5" ry="3" fill="#FFFFFF" opacity="0.45" transform="rotate(-30 68 40)"/>`,
+    pote: () => `<rect width="160" height="100" fill="#D8EBCF"/>
+      ${paw(20, 84, 0.55, -30, '#7FA672', 0.6)}${paw(38, 68, 0.6, -30, '#7FA672', 0.7)}${paw(54, 84, 0.6, -25, '#7FA672', 0.6)}
+      ${paw(88, 50, 1.55, -12, '#3E6B3A')}
+      <g transform="rotate(-18 128 26)"><rect x="114" y="22" width="28" height="8" rx="4" fill="#FFFFFF"/><circle cx="114" cy="22" r="5" fill="#FFFFFF"/><circle cx="114" cy="30" r="5" fill="#FFFFFF"/><circle cx="142" cy="22" r="5" fill="#FFFFFF"/><circle cx="142" cy="30" r="5" fill="#FFFFFF"/></g>`,
+    sol: () => `<rect width="160" height="100" fill="#8FD3F4"/>
+      ${Array.from({ length: 12 }, (_, i) => { const a = (i * Math.PI) / 6; return `<line x1="${r1(122 + Math.cos(a) * 17)}" y1="${r1(26 + Math.sin(a) * 17)}" x2="${r1(122 + Math.cos(a) * 23)}" y2="${r1(26 + Math.sin(a) * 23)}" stroke="#FFD23F" stroke-width="2.4" stroke-linecap="round"/>`; }).join('')}
+      <circle cx="122" cy="26" r="13" fill="#FFD23F"/>
+      <rect y="56" width="160" height="26" fill="#2E86C1"/>
+      <path d="M0 64q10-4 20 0${'t20 0'.repeat(7)}M0 72q10-4 20 0${'t20 0'.repeat(7)}" stroke="#FFFFFF" stroke-width="1.6" fill="none" opacity="0.6"/>
+      <path d="M0 80Q60 72 160 78V100H0Z" fill="#F3D9A4"/>
+      <line x1="50" y1="38" x2="55" y2="92" stroke="#7A5A3A" stroke-width="2.2" stroke-linecap="round"/>
+      <g transform="rotate(-10 50 48)"><path d="M26 50a24 16 0 0 1 48 0Z" fill="#E23D3D"/><path d="M43 50a7 16 0 0 1 14 0Z" fill="#FFFFFF"/></g>
+      <ellipse cx="104" cy="90" rx="14" ry="3" fill="#E9C27E"/>`,
+  };
+  const ARTS = [['kake', 'Kake'], ['gave', 'Gåve'], ['ballong', 'Ballongar'], ['jultre', 'Juletre'], ['graskar', 'Graskar'], ['fyrverkeri', 'Fyrverkeri'], ['flagg', 'Flagg'], ['egg', 'Påskeegg'], ['bal', 'Sankthansbål'], ['hjarte', 'Hjarte'], ['pote', 'Pote'], ['sol', 'Sol og strand']];
+  const ART_WORDS = [
+    [/bursdag|fødselsdag|bday/i, 'kake'], [/jul/i, 'jultre'], [/halloween|grøss/i, 'graskar'], [/nyttår|nyår|rakett/i, 'fyrverkeri'],
+    [/17\.? ?mai|nasjonaldag|grunnlovsdag/i, 'flagg'], [/påske/i, 'egg'], [/sankthans|jonsok|midtsommar/i, 'bal'],
+    [/morsdag|valentin|bryllup|kjærast|forlov|jubileum/i, 'hjarte'], [/hund|valp|katt|kanin|hest/i, 'pote'],
+    [/ferie|sommar|strand|reise|syden/i, 'sol'], [/fest|selskap|feiring|party/i, 'ballong'], [/gåve|farsdag|konfirmasjon|dåp/i, 'gave'],
+  ];
+  const artFor = title => { const hit = ART_WORDS.find(([re]) => re.test(title)); return hit ? hit[1] : null; };
+  const artCache = {};
+  const artSVG = k => artCache[k] || (artCache[k] = `<svg viewBox="0 0 160 100" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">${ART[k]().replace(/\s*\n\s*/g, '')}</svg>`);
 
   // ---------- Datoar ----------
   const pad = n => String(n).padStart(2, '0');
@@ -427,10 +592,19 @@ input[type="date"].input,input[type="time"].input{-webkit-appearance:none;appear
   }
 
   // ---------- Tilstand og lagring ----------
-  const S = { events: [], mode: 'local', loading: !!(window.claude && window.claude.use), canWrite: true, col: null, assets: null, memoryOnly: false, detailId: null, lastFocus: null };
-  let F = null;
+  const S = { events: [], mode: 'local', loading: !!(window.claude && window.claude.use), canWrite: true, col: null, assets: null, memoryOnly: false, detailId: null, lastFocus: null, acc: null, synced: 0, offline: false };
+  let F = null, A = null;
 
-  const validPhoto = p => p && typeof p === 'object' && ((typeof p.asset === 'string' && /^[0-9a-f]{32}$/i.test(p.asset)) || (typeof p.data === 'string' && p.data.startsWith('data:image/')));
+  // Bilete: { art } (ferdig illustrasjon), { asset } (claude.ai), { cloud } (kontoen), { data } (lagra på eininga).
+  function normPhoto(p) {
+    if (!p || typeof p !== 'object') return null;
+    if (typeof p.art === 'string' && ART[p.art]) return { art: p.art };
+    if (typeof p.asset === 'string' && HEX32.test(p.asset)) return { asset: p.asset };
+    if (typeof p.cloud === 'string' && HEX32.test(p.cloud)) return { cloud: p.cloud };
+    if (typeof p.data === 'string' && p.data.startsWith('data:image/')) return { data: p.data };
+    return null;
+  }
+  const validPhoto = p => !!normPhoto(p);
   function clean(raw) {
     if (!raw || typeof raw.title !== 'string') return null;
     const rule = raw.rule && typeof raw.rule === 'object' && (raw.rule.type === 'easter' || raw.rule.type === 'nth') ? raw.rule : null;
@@ -444,13 +618,23 @@ input[type="date"].input,input[type="time"].input{-webkit-appearance:none;appear
       repeat: raw.repeat && typeof raw.repeat === 'object' ? { unit: UNIT_NAMES[raw.repeat.unit] ? raw.repeat.unit : 'none', every: Math.min(99, Math.max(1, raw.repeat.every | 0 || 1)) } : { unit: 'none', every: 1 },
       rule: raw.kind === 'up' ? null : rule,
       color: COLORS.includes(raw.color) ? raw.color : 'rogn',
-      photo: validPhoto(raw.photo) ? raw.photo : null,
+      photo: normPhoto(raw.photo),
       showAge: !!raw.showAge,
       template: typeof raw.template === 'string' ? raw.template : null,
       created: +raw.created || 0,
     };
   }
-  const photoSrc = p => (!validPhoto(p) ? '' : p.asset ? '/_blob/' + p.asset : p.data);
+  function photoSrc(p) {
+    p = normPhoto(p);
+    if (!p || p.art) return '';
+    return p.asset ? '/_blob/' + p.asset : p.cloud ? API + '/bilete/' + p.cloud : p.data;
+  }
+  function photoHTML(p, lazy) {
+    p = normPhoto(p);
+    if (!p) return '';
+    if (p.art) return `<span class="art">${artSVG(p.art)}</span>`;
+    return `<img src="${esc(photoSrc(p))}" alt=""${lazy ? ' loading="lazy"' : ''}>`;
+  }
 
   function readLocal() {
     try {
@@ -475,9 +659,129 @@ input[type="date"].input,input[type="time"].input{-webkit-appearance:none;appear
       throw e;
     }
   }
+  // ---------- Konto og synk (appen på GitHub) ----------
+  function readJson(key) { try { return JSON.parse(localStorage.getItem(key) || 'null'); } catch { return null; } }
+  function writeJson(key, v) { try { v == null ? localStorage.removeItem(key) : localStorage.setItem(key, JSON.stringify(v)); } catch { /* lagring sperra */ } }
+  const saveCloudCache = () => { if (S.acc) writeJson(CLOUD_KEY, { namn: S.acc.namn, events: S.events }); };
+
+  async function api(path, opts = {}) {
+    const headers = { ...(opts.headers || {}) };
+    if (S.acc && !opts.noAuth) headers.Authorization = 'Bearer ' + S.acc.token;
+    let body = opts.body;
+    if (opts.json !== undefined) { headers['Content-Type'] = 'application/json'; body = JSON.stringify(opts.json); }
+    let res;
+    try { res = await fetch(API + path, { method: opts.method || 'GET', headers, body }); }
+    catch { throw Object.assign(new Error('offline'), { code: 'offline' }); }
+    let data = null;
+    try { data = await res.json(); } catch { /* tomt svar */ }
+    if (!res.ok) {
+      if (res.status === 401 && S.acc && !opts.noAuth) onLoggedOut();
+      throw Object.assign(new Error('api'), { code: 'api', status: res.status, msg: data && data.feil });
+    }
+    return data || {};
+  }
+  async function uploadCloud(blob) {
+    if (blob.size > 1400000) throw Object.assign(new Error('image'), { code: 'image' });
+    const r = await api('/bilete', { method: 'POST', body: blob, headers: { 'Content-Type': 'image/jpeg' } });
+    return { cloud: r.id };
+  }
+  const dropCloud = id => { if (S.mode === 'cloud' && id) api('/bilete/' + id, { method: 'DELETE' }).catch(() => {}); };
+
+  async function pull(quiet) {
+    if (S.mode !== 'cloud') return;
+    try {
+      const d = await api('/hendingar');
+      if (S.mode !== 'cloud') return;
+      S.events = (d.hendingar || []).map(clean).filter(Boolean);
+      S.synced = Date.now();
+      S.offline = false;
+      saveCloudCache();
+    } catch (e) {
+      if (e.code === 'offline') S.offline = true;
+      else if (!quiet) toast(errText(e));
+    }
+    S.loading = false;
+    render();
+    if (S.detailId) refreshDetail();
+  }
+
+  // Flyttar nedteljingar som låg på eininga før innlogging, inn på kontoen.
+  let migrating = false;
+  async function migrateLocal() {
+    if (migrating || S.mode !== 'cloud') return 0;
+    const local = readLocal();
+    if (!local.length) return 0;
+    migrating = true;
+    let moved = 0;
+    const left = [];
+    try {
+      for (let i = 0; i < local.length; i++) {
+        const ev = local[i];
+        if (S.events.some(e => e.id === ev.id || (ev.template && e.template === ev.template))) continue;
+        try {
+          const { id, ...doc } = ev;
+          if (doc.photo && doc.photo.data) doc.photo = await uploadCloud(await (await fetch(doc.photo.data)).blob());
+          await api('/hendingar/' + id, { method: 'PUT', json: doc });
+          moved++;
+        } catch (e) {
+          left.push(ev);
+          if (e.code === 'offline') { left.push(...local.slice(i + 1)); break; }
+        }
+      }
+      try { left.length ? localStorage.setItem(KEY, JSON.stringify(left)) : localStorage.removeItem(KEY); } catch { /* lagring sperra */ }
+    } finally { migrating = false; }
+    if (moved) await pull(true);
+    return moved;
+  }
+
+  async function doAuth(kind, namn, passord) {
+    const d = await api(kind === 'ny' ? '/konto' : '/logg-inn', { method: 'POST', json: { namn, passord }, noAuth: true });
+    S.acc = { namn: d.namn, token: d.token };
+    writeJson(ACC_KEY, S.acc);
+    S.mode = 'cloud';
+    S.events = [];
+    S.loading = true;
+    await pull(true);
+    return migrateLocal();
+  }
+  function endSession() {
+    S.acc = null;
+    writeJson(ACC_KEY, null);
+    writeJson(CLOUD_KEY, null);
+    S.mode = 'local';
+    S.events = readLocal();
+    S.synced = 0;
+    S.offline = false;
+    S.loading = false;
+    if (!layer.hidden) closeLayer();
+    render();
+  }
+  function onLoggedOut() {
+    endSession();
+    toast('Du er logga ut. Logg inn igjen for å sjå nedteljingane dine.');
+  }
+  async function logout() {
+    try { await api('/logg-ut', { method: 'POST', headers: { Authorization: 'Bearer ' + S.acc.token }, noAuth: true }); } catch { /* loggar ut lokalt uansett */ }
+    endSession();
+    toast('Du er logga ut');
+  }
+  function syncText() {
+    if (S.offline) return 'Ingen nett no. Du ser nedteljingane slik dei var sist.';
+    if (!S.synced) return 'Synkar …';
+    const d = new Date(S.synced);
+    return `Sist synka kl. ${pad(d.getHours())}:${pad(d.getMinutes())}.`;
+  }
+
   const Store = {
     async put(id, doc) {
       if (S.mode === 'db') return retryOnce(() => S.col.doc(id).set(doc));
+      if (S.mode === 'cloud') {
+        await api('/hendingar/' + id, { method: 'PUT', json: doc });
+        S.events = S.events.filter(e => e.id !== id).concat([clean({ id, ...doc })]);
+        saveCloudCache();
+        render();
+        return;
+      }
       const next = S.events.filter(e => e.id !== id).concat([clean({ id, ...doc })]);
       writeLocal(next);
       S.events = next;
@@ -485,6 +789,13 @@ input[type="date"].input,input[type="time"].input{-webkit-appearance:none;appear
     },
     async del(id) {
       if (S.mode === 'db') return retryOnce(() => S.col.doc(id).delete());
+      if (S.mode === 'cloud') {
+        await api('/hendingar/' + id, { method: 'DELETE' });
+        S.events = S.events.filter(e => e.id !== id);
+        saveCloudCache();
+        render();
+        return;
+      }
       const next = S.events.filter(e => e.id !== id);
       writeLocal(next);
       S.events = next;
@@ -496,6 +807,8 @@ input[type="date"].input,input[type="time"].input{-webkit-appearance:none;appear
   }
   function errText(e) {
     const c = e && e.code;
+    if (c === 'offline') return 'Fekk ikkje kontakt med serveren. Sjekk nettet og prøv igjen.';
+    if (c === 'api') return e.msg || 'Noko gjekk gale. Prøv igjen om litt.';
     if (c === 'local_full') return 'Nettlesaren har ikkje meir plass. Fjern bilete frå nokre nedteljingar, eller vel eit mindre bilete.';
     if (c === 'quota_exceeded') return 'Lagringa er full. Slett nokre gamle nedteljingar og prøv igjen.';
     if (c === 'invalid_argument') return 'Du har ikkje løyve til å endre denne kalenderen.';
@@ -526,6 +839,11 @@ input[type="date"].input,input[type="time"].input{-webkit-appearance:none;appear
   }
   const blobToData = b => new Promise((res, rej) => { const fr = new FileReader(); fr.onload = () => res(fr.result); fr.onerror = rej; fr.readAsDataURL(b); });
   async function persistPhoto(file) {
+    if (S.mode === 'cloud') {
+      let blob = await shrink(file, 1600, 0.85);
+      if (blob.size > 1400000) blob = await shrink(file, 1200, 0.78);
+      return uploadCloud(blob);
+    }
     if (S.assets) {
       try {
         const blob = await shrink(file, 1600, 0.85);
@@ -567,12 +885,12 @@ input[type="date"].input,input[type="time"].input{-webkit-appearance:none;appear
 
   function pageHTML(ev, st, now, big) {
     const c = cardData(ev, st, now);
-    const src = photoSrc(ev.photo);
+    const ph = photoHTML(ev.photo, true);
     const soon = st.phase === 'today' || (st.phase === 'down' && st.days <= 7);
-    const cls = ['page', big && 'big', src && 'has-photo', soon && 'soon', st.ended && 'ended'].filter(Boolean).join(' ');
+    const cls = ['page', big && 'big', ph && 'has-photo', soon && 'soon', st.ended && 'ended'].filter(Boolean).join(' ');
     const L = Math.min(6, Math.max(1, c.num.length));
     return `<button type="button" class="${cls}" data-open="${esc(ev.id)}" style="--band:var(--c-${ev.color})" aria-label="${esc(`${ev.title}: ${c.num} ${c.unit}, ${c.when}${c.extra ? ', ' + c.extra : ''}`)}">`
-      + `<span class="band">${src ? `<img src="${esc(src)}" alt="" loading="lazy">` : ''}<span class="band-title">${esc(ev.title)}</span></span>`
+      + `<span class="band">${ph}<span class="band-title">${esc(ev.title)}</span></span>`
       + `<span class="perf" aria-hidden="true"></span>`
       + `<span class="body" aria-hidden="true"><span class="num l${L}">${esc(c.num)}</span><span class="unit">${esc(c.unit)}</span><span class="when">${esc(c.when)}</span>${c.extra ? `<span class="extra">${esc(c.extra)}</span>` : ''}</span>`
       + `</button>`;
@@ -585,11 +903,11 @@ input[type="date"].input,input[type="time"].input{-webkit-appearance:none;appear
 
   function tplEvent(t, today) {
     if (t.rule) {
-      return { title: t.title, kind: 'down', date: ymd(firstOcc({ rule: t.rule }, today)), time: '', repeat: { unit: 'year', every: 1 }, rule: t.rule, color: t.color, template: t.key };
+      return { title: t.title, kind: 'down', date: ymd(firstOcc({ rule: t.rule }, today)), time: '', repeat: { unit: 'year', every: 1 }, rule: t.rule, color: t.color, photo: { art: t.art }, template: t.key };
     }
     let d = new Date(today.getFullYear(), t.m, t.d);
     if (d < today) d = new Date(today.getFullYear() + 1, t.m, t.d);
-    return { title: t.title, kind: 'down', date: ymd(d), time: '', repeat: { unit: 'year', every: 1 }, rule: null, color: t.color, template: t.key };
+    return { title: t.title, kind: 'down', date: ymd(d), time: '', repeat: { unit: 'year', every: 1 }, rule: null, color: t.color, photo: { art: t.art }, template: t.key };
   }
 
   function suggHTML(now) {
@@ -620,6 +938,11 @@ input[type="date"].input,input[type="time"].input{-webkit-appearance:none;appear
     const add = $('#addBtn');
     add.hidden = !S.canWrite || S.loading;
     if (!add.innerHTML) add.innerHTML = ICON.plus + '<span>Ny</span>';
+    const konto = $('#kontoBtn');
+    konto.hidden = !CLOUD_OK;
+    if (!konto.innerHTML) konto.innerHTML = ICON.user;
+    konto.classList.toggle('on', !!S.acc);
+    konto.setAttribute('aria-label', S.acc ? `Konto: innlogga som ${S.acc.namn}` : 'Logg inn for å synke');
 
     const rows = S.events.map(ev => ({ ev, st: status(ev, now) }));
     const downs = rows.filter(r => r.st.phase !== 'since').sort((a, b) => a.st.days - b.st.days || a.ev.title.localeCompare(b.ev.title, 'nb'));
@@ -627,6 +950,9 @@ input[type="date"].input,input[type="time"].input{-webkit-appearance:none;appear
     const hero = downs[0] || ups.find(r => !r.st.ended) || null;
 
     let html = '';
+    if (CLOUD_OK && !S.acc && !S.loading) {
+      html += `<div class="strip"><p>Vil du sjå nedteljingane på både PC-en og telefonen? Logg inn, så blir dei synka.</p><button type="button" class="btn" data-login>${ICON.user}<span>Logg inn</span></button></div>`;
+    }
     if (S.loading) {
       html += `<section><div class="blank"><span class="band"></span><span class="perf" aria-hidden="true"></span><div class="blank-in"><h2>Hentar nedteljingane dine</h2><p>Det tek berre eit augeblikk.</p></div></div></section>`;
     } else if (!hero) {
@@ -648,6 +974,7 @@ input[type="date"].input,input[type="time"].input{-webkit-appearance:none;appear
     $('#foot').textContent = S.loading ? ''
       : !S.canWrite ? 'Du kan sjå denne kalenderen, men ikkje endre han.'
       : S.mode === 'db' ? 'Nedteljingane er lagra på claude.ai, så du ser dei same på telefonen og PC-en.'
+      : S.mode === 'cloud' ? `Innlogga som «${S.acc.namn}». ${syncText()}`
       : S.memoryOnly ? 'Denne nettlesaren lagrar ikkje data her, så nedteljingane forsvinn når du lukkar sida.'
       : 'Nedteljingane er lagra på denne eininga.';
   }
@@ -664,8 +991,9 @@ input[type="date"].input,input[type="time"].input{-webkit-appearance:none;appear
   }
   function closeLayer() {
     stopTick();
-    if (F && F.preview) URL.revokeObjectURL(F.preview);
+    if (F && F.ownPreview) URL.revokeObjectURL(F.ownPreview);
     F = null;
+    A = null;
     S.detailId = null;
     layer.hidden = true;
     layer.innerHTML = '';
@@ -681,7 +1009,7 @@ input[type="date"].input,input[type="time"].input{-webkit-appearance:none;appear
   const TICK_NAMES = [['dag', 'dagar'], ['time', 'timar'], ['minutt', 'minutt'], ['sekund', 'sekund']];
 
   function detailInner(ev, now) {
-    const st = status(ev, now), c = cardData(ev, st, now), t = st.today, src = photoSrc(ev.photo);
+    const st = status(ev, now), c = cardData(ev, st, now), t = st.today, ph = photoHTML(ev.photo, false);
     const facts = [];
     const timeTxt = ev.time ? ` kl. ${ev.time}` : '';
     if (st.phase === 'since') {
@@ -714,7 +1042,7 @@ input[type="date"].input,input[type="time"].input{-webkit-appearance:none;appear
     const soon = st.phase === 'today' || (st.phase === 'down' && st.days <= 7);
     const unitLine = st.phase === 'today' ? 'er dagen' : `${c.unit} ${st.phase === 'since' ? '' : esc(ev.title)}`.trim();
     return `<button type="button" class="x" data-close aria-label="Lukk">${ICON.x}</button>`
-      + `<div class="d-media${src ? ' has-photo' : ''}" style="--band:var(--c-${ev.color})">${src ? `<img src="${esc(src)}" alt="">` : ''}<h2 class="d-title" id="sheetTitle">${esc(ev.title)}</h2></div>`
+      + `<div class="d-media${ph ? ' has-photo' : ''}" style="--band:var(--c-${ev.color})">${ph}<h2 class="d-title" id="sheetTitle">${esc(ev.title)}</h2></div>`
       + `<div class="d-count${soon ? ' soon' : ''}${st.ended ? ' ended' : ''}"><span class="num l${L}">${esc(c.num)}</span><span class="unit">${unitLine}</span>${c.extra ? `<span class="extra">${esc(c.extra)}</span>` : ''}</div>`
       + (showTick
         ? `<div class="tick" aria-hidden="true">${tv.v.map((x, i) => `<div><b data-t="${i}">${fmt(x)}</b><span data-tl="${i}">${TICK_NAMES[i][x === 1 ? 0 : 1]}</span></div>`).join('')}</div>`
@@ -811,10 +1139,13 @@ input[type="date"].input,input[type="time"].input{-webkit-appearance:none;appear
       rule: init.rule || null,
       color: COLORS.includes(init.color) ? init.color : 'rogn',
       template: init.template || null,
-      photo: init.photo || null,
+      photo: normPhoto(init.photo),
       created: init.created || Date.now(),
-      file: null, preview: null, removePhoto: false, busy: false,
+      ownFile: null, ownPreview: null, busy: false,
     };
+    const p = F.photo;
+    F.pick = !p ? 'none' : p.art ? 'art:' + p.art : 'keep';
+    F.autoArt = !F.id && !p;
     showLayer(formHTML(), 'form');
     syncForm();
     if (!F.id) setTimeout(() => { const t = $('#fTitle', layer); if (t && !matchMedia('(pointer: coarse)').matches) t.focus(); }, 60);
@@ -836,16 +1167,21 @@ input[type="date"].input,input[type="time"].input{-webkit-appearance:none;appear
       + `<label class="check" id="ageRow"><input type="checkbox" id="fAge"${F.showAge ? ' checked' : ''}><span>Vis alder, til dømes «fyller 10 år»</span></label>`
       + `</fieldset>`
       + `<fieldset class="field"><legend>Farge</legend><div class="swatches">${COLORS.map(c => `<label class="sw" style="--band:var(--c-${c})"><input type="radio" name="fColor" value="${c}"${F.color === c ? ' checked' : ''} aria-label="${COLOR_NAMES[c]}"><span></span></label>`).join('')}</div></fieldset>`
-      + `<div class="field"><span>Bilete <em>(valfritt)</em></span><div class="photo-pick" id="photoPick">${photoPickHTML()}</div></div>`
+      + `<div class="field"><span>Bilete</span><div class="art-grid" id="artGrid">${artGridHTML()}</div>`
+      + `<div class="photo-pick"><label class="btn"><input type="file" accept="image/*" id="fPhoto" class="sr">${ICON.image}<span>Bruk eige bilete</span></label></div></div>`
       + `<p class="form-err" id="formErr" role="alert"></p>`
       + `<div class="form-foot"><button type="button" class="btn" data-close>Avbryt</button><button type="submit" class="btn btn-primary" id="saveBtn">${editing ? 'Lagre endringane' : 'Legg til'}</button></div>`
       + `</form>`;
   }
-  function photoPickHTML() {
-    const src = F.preview || (!F.removePhoto && photoSrc(F.photo));
-    const pick = label => `<label class="btn"><input type="file" accept="image/*" id="fPhoto" class="sr">${ICON.image}<span>${label}</span></label>`;
-    return src ? `<img class="thumb" src="${esc(src)}" alt="Valt bilete">${pick('Byt bilete')}<button type="button" class="btn" id="photoRemove">Fjern</button>` : pick('Vel bilete');
+  // Rutenett med «Ingen», eige bilete (om det finst) og dei ferdige illustrasjonane.
+  function artGridHTML() {
+    const ownSrc = F.ownPreview || photoSrc(F.photo);
+    const own = F.pick === 'file' || F.pick === 'keep';
+    return `<button type="button" class="art-opt none" data-art="" aria-pressed="${F.pick === 'none'}">Ingen</button>`
+      + (ownSrc ? `<button type="button" class="art-opt" data-art="own" aria-pressed="${own}" aria-label="Eige bilete" title="Eige bilete"><img class="thumb" src="${esc(ownSrc)}" alt=""></button>` : '')
+      + ARTS.map(([k, l]) => `<button type="button" class="art-opt" data-art="${k}" aria-pressed="${F.pick === 'art:' + k}" aria-label="${l}" title="${l}">${artSVG(k)}</button>`).join('');
   }
+  const redrawArt = () => { const g = $('#artGrid', layer); if (g) g.innerHTML = artGridHTML(); };
   function syncForm() {
     if (!F) return;
     const today = dateOnly(new Date());
@@ -879,8 +1215,10 @@ input[type="date"].input,input[type="time"].input{-webkit-appearance:none;appear
     F.busy = true; btn.disabled = true; btn.textContent = 'Lagrar …'; formErr('');
     const form = F;
     try {
-      let photo = form.removePhoto ? null : form.photo;
-      if (form.file) photo = await persistPhoto(form.file);
+      let photo = null;
+      if (form.pick.startsWith('art:')) photo = { art: form.pick.slice(4) };
+      else if (form.pick === 'keep') photo = form.photo;
+      else if (form.pick === 'file' && form.ownFile) photo = await persistPhoto(form.ownFile);
       const today = dateOnly(new Date());
       const doc = {
         title,
@@ -900,6 +1238,7 @@ input[type="date"].input,input[type="time"].input{-webkit-appearance:none;appear
       const old = form.id ? S.events.find(e => e.id === form.id) : null;
       await Store.put(id, doc);
       if (old && old.photo && old.photo.asset && (!photo || photo.asset !== old.photo.asset)) dropAsset(old.photo.asset);
+      if (old && old.photo && old.photo.cloud && (!photo || photo.cloud !== old.photo.cloud)) dropCloud(old.photo.cloud);
       if (F !== form) return;
       closeLayer();
       toast(form.id ? 'Endringane er lagra' : 'Lagt til');
@@ -926,6 +1265,7 @@ input[type="date"].input,input[type="time"].input{-webkit-appearance:none;appear
     try {
       await Store.del(id);
       if (ev && ev.photo && ev.photo.asset) dropAsset(ev.photo.asset);
+      if (ev && ev.photo && ev.photo.cloud) dropCloud(ev.photo.cloud);
       closeLayer();
       toast('Sletta');
     } catch (e) {
@@ -942,24 +1282,88 @@ input[type="date"].input,input[type="time"].input{-webkit-appearance:none;appear
     toastTimer = setTimeout(() => toastEl.classList.remove('show'), 2600);
   }
 
+  // ---------- Konto-arket ----------
+  function openAccount(tab) {
+    if (S.acc) {
+      showLayer(`<div class="acct">`
+        + `<div class="form-head"><h2 id="sheetTitle">Kontoen din</h2><button type="button" class="x plain" data-close aria-label="Lukk">${ICON.x}</button></div>`
+        + `<p>Du er logga inn som <b>${esc(S.acc.namn)}</b>. Logg inn med same namn og passord på PC-en og telefonen, så ser du dei same nedteljingane overalt.</p>`
+        + `<p class="muted" id="syncInfo">${esc(syncText())}</p>`
+        + `<div class="form-foot"><button type="button" class="btn" data-logout>Logg ut</button><button type="button" class="btn btn-primary" data-sync>Synk no</button></div>`
+        + `</div>`, 'acct');
+      return;
+    }
+    A = { tab: tab === 'ny' ? 'ny' : 'inn', busy: false, namn: A ? A.namn : '' };
+    showLayer(acctFormHTML(), 'acct');
+  }
+  function acctFormHTML() {
+    const ny = A.tab === 'ny';
+    const n = S.mode === 'local' ? S.events.length : 0;
+    return `<form class="acct" id="acctForm" novalidate>`
+      + `<div class="form-head"><h2 id="sheetTitle">${ny ? 'Lag konto' : 'Logg inn'}</h2><button type="button" class="x plain" data-close aria-label="Lukk">${ICON.x}</button></div>`
+      + `<p class="muted">Med ein konto ser du dei same nedteljingane på PC-en og telefonen. Bruk same namn og passord på alle einingane.</p>`
+      + `<div class="seg" role="group" aria-label="Konto"><button type="button" data-tab="inn" aria-pressed="${!ny}">Eg har konto</button><button type="button" data-tab="ny" aria-pressed="${ny}">Lag ny konto</button></div>`
+      + `<label class="field"><span>Namn</span><input class="input" id="aNamn" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" maxlength="30" value="${esc(A.namn)}" placeholder="Til dømes lillerud"></label>`
+      + `<label class="field"><span>Passord</span><input class="input" id="aPass" type="password" autocomplete="${ny ? 'new-password' : 'current-password'}" maxlength="200"></label>`
+      + (ny ? `<label class="field"><span>Skriv passordet ein gong til</span><input class="input" id="aPass2" type="password" autocomplete="new-password" maxlength="200"></label>`
+        + `<p class="hint">Namnet kan ha bokstavar, tal, punktum og bindestrek. Passordet må ha minst 6 teikn. Skriv det ned ein trygg stad, for det går ikkje an å få eit nytt om du gløymer det.</p>` : '')
+      + (n ? `<p class="hint">${n === 1 ? 'Nedteljinga' : `Dei ${n} nedteljingane`} på denne eininga blir flytta inn på kontoen.</p>` : '')
+      + `<p class="form-err" id="acctErr" role="alert"></p>`
+      + `<div class="form-foot"><button type="button" class="btn" data-close>Avbryt</button><button type="submit" class="btn btn-primary" id="acctSubmit">${ny ? 'Lag konto' : 'Logg inn'}</button></div>`
+      + `</form>`;
+  }
+  async function submitAcct() {
+    if (!A || A.busy) return;
+    const namn = $('#aNamn', layer).value.trim(), pass = $('#aPass', layer).value;
+    const err = m => { $('#acctErr', layer).textContent = m; };
+    if (namn.length < 3) return err('Skriv eit namn på minst 3 teikn.');
+    if (pass.length < 6) return err('Passordet må ha minst 6 teikn.');
+    if (A.tab === 'ny' && pass !== $('#aPass2', layer).value) return err('Dei to passorda er ikkje like.');
+    const btn = $('#acctSubmit', layer), label = btn.textContent, acct = A;
+    acct.busy = true; btn.disabled = true; btn.textContent = A.tab === 'ny' ? 'Lagar konto …' : 'Loggar inn …'; err('');
+    try {
+      const moved = await doAuth(A.tab, namn, pass);
+      if (A === acct) closeLayer();
+      toast(moved ? `Logga inn. ${moved} ${pl(moved, 'nedteljing', 'nedteljingar')} er flytta inn på kontoen.` : 'Logga inn');
+    } catch (e) {
+      if (A !== acct) return;
+      acct.busy = false; btn.disabled = false; btn.textContent = label;
+      err(errText(e));
+    }
+  }
+
   // ---------- Hendingar ----------
   main.addEventListener('click', e => {
-    const el = e.target.closest('[data-open],[data-tpl],[data-start],[data-new]');
+    const el = e.target.closest('[data-open],[data-tpl],[data-start],[data-new],[data-login]');
     if (!el) return;
     const today = dateOnly(new Date());
     if (el.dataset.open) openDetail(el.dataset.open);
     else if (el.dataset.tpl) { const t = TEMPLATES.find(x => x.key === el.dataset.tpl); if (t) openForm(tplEvent(t, today)); }
-    else if (el.dataset.start === 'bursdag') openForm({ kind: 'down', repeat: { unit: 'year', every: 1 }, showAge: true, color: 'lyng', placeholder: 'Til dømes «Bursdag til Emma»' });
-    else if (el.dataset.start === 'sidan') openForm({ kind: 'up', color: 'gran', date: ymd(today), placeholder: 'Til dømes «Hunden kom i hus»' });
+    else if (el.dataset.start === 'bursdag') openForm({ kind: 'down', repeat: { unit: 'year', every: 1 }, showAge: true, color: 'lyng', photo: { art: 'kake' }, placeholder: 'Til dømes «Bursdag til Emma»' });
+    else if (el.dataset.start === 'sidan') openForm({ kind: 'up', color: 'gran', date: ymd(today), photo: { art: 'pote' }, placeholder: 'Til dømes «Hunden kom i hus»' });
     else if ('new' in el.dataset) openForm();
+    else if ('login' in el.dataset) openAccount('inn');
   });
   $('#addBtn').addEventListener('click', () => openForm());
+  $('#kontoBtn').addEventListener('click', () => openAccount('inn'));
 
   layer.addEventListener('click', e => {
     if (e.target === layer) { closeLayer(); return; }
-    const el = e.target.closest('[data-close],[data-edit],[data-del],[data-kind],[data-unit],#ruleClear,#photoRemove');
+    const el = e.target.closest('[data-close],[data-edit],[data-del],[data-kind],[data-unit],[data-art],[data-tab],[data-logout],[data-sync],#ruleClear');
     if (!el) return;
     if ('close' in el.dataset) closeLayer();
+    else if (A && el.dataset.tab) { A.namn = $('#aNamn', layer).value; A.tab = el.dataset.tab; layer.firstElementChild.innerHTML = acctFormHTML(); $('#aNamn', layer).focus(); }
+    else if ('logout' in el.dataset) logout();
+    else if ('sync' in el.dataset) {
+      el.disabled = true;
+      pull().then(() => { const i = $('#syncInfo', layer); if (i) i.textContent = syncText(); el.disabled = false; });
+    }
+    else if (F && 'art' in el.dataset) {
+      const k = el.dataset.art;
+      F.autoArt = false;
+      F.pick = k === '' ? 'none' : k === 'own' ? (F.ownFile ? 'file' : 'keep') : 'art:' + k;
+      redrawArt();
+    }
     else if (el.dataset.edit) { const ev = S.events.find(x => x.id === el.dataset.edit); stopTick(); S.detailId = null; if (ev) openForm(ev); }
     else if (el.dataset.del) deleteClick(el, el.dataset.del);
     else if (F && el.dataset.kind) {
@@ -969,16 +1373,17 @@ input[type="date"].input,input[type="time"].input{-webkit-appearance:none;appear
     }
     else if (F && el.dataset.unit) { F.unit = el.dataset.unit; syncForm(); }
     else if (F && el.id === 'ruleClear') { F.date = ymd(firstOcc({ rule: F.rule }, dateOnly(new Date()))); F.rule = null; F.unit = 'year'; $('#fDate', layer).value = F.date; syncForm(); }
-    else if (F && el.id === 'photoRemove') {
-      if (F.preview) URL.revokeObjectURL(F.preview);
-      F.file = null; F.preview = null; F.removePhoto = true;
-      $('#photoPick', layer).innerHTML = photoPickHTML();
-    }
   });
   layer.addEventListener('input', e => {
     if (!F) return;
     const id = e.target.id;
-    if (id === 'fTitle') F.title = e.target.value;
+    if (id === 'fTitle') {
+      F.title = e.target.value;
+      if (F.autoArt) {
+        const k = artFor(F.title), pick = k ? 'art:' + k : 'none';
+        if (pick !== F.pick) { F.pick = pick; redrawArt(); }
+      }
+    }
     else if (id === 'fDate') F.date = e.target.value;
     else if (id === 'fTime') F.time = e.target.value;
     else if (id === 'fEvery') { F.every = parseInt(e.target.value, 10) || 1; syncForm(); }
@@ -993,13 +1398,13 @@ input[type="date"].input,input[type="time"].input{-webkit-appearance:none;appear
     else if (t.id === 'fPhoto' && t.files && t.files[0]) {
       const file = t.files[0];
       if (!/^image\//.test(file.type) && !/\.(heic|heif|jpe?g|png|webp|gif)$/i.test(file.name)) { formErr('Vel ei biletfil, til dømes JPG, PNG eller HEIC.'); return; }
-      if (F.preview) URL.revokeObjectURL(F.preview);
-      F.file = file; F.preview = URL.createObjectURL(file); F.removePhoto = false;
-      $('#photoPick', layer).innerHTML = photoPickHTML();
+      if (F.ownPreview) URL.revokeObjectURL(F.ownPreview);
+      F.ownFile = file; F.ownPreview = URL.createObjectURL(file); F.pick = 'file'; F.autoArt = false;
+      redrawArt();
       formErr('');
     }
   });
-  layer.addEventListener('submit', e => { e.preventDefault(); submitForm(); });
+  layer.addEventListener('submit', e => { e.preventDefault(); if (e.target.id === 'acctForm') submitAcct(); else submitForm(); });
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && !layer.hidden) closeLayer(); });
   document.addEventListener('error', e => {
     const img = e.target;
@@ -1015,7 +1420,13 @@ input[type="date"].input,input[type="time"].input{-webkit-appearance:none;appear
     const key = ymd(now) + (S.events.some(e => e.time) ? `${now.getHours()}:${now.getMinutes()}` : '');
     if (key !== lastKey) { lastKey = key; render(); }
   }, 15000);
-  document.addEventListener('visibilitychange', () => { if (!document.hidden) { render(); refreshDetail(); } });
+  setInterval(() => { if (S.mode === 'cloud' && !document.hidden) pull(true); }, 30000);
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) return;
+    render();
+    refreshDetail();
+    if (S.mode === 'cloud') pull(true);
+  });
 
   // ---------- Oppstart ----------
   function useLocal() {
@@ -1025,6 +1436,19 @@ input[type="date"].input,input[type="time"].input{-webkit-appearance:none;appear
   }
   async function init() {
     render();
+    if (CLOUD_OK) {
+      const acc = readJson(ACC_KEY);
+      if (!acc || !acc.token || !acc.namn) { useLocal(); return; }
+      S.acc = { namn: String(acc.namn), token: String(acc.token) };
+      S.mode = 'cloud';
+      const cache = readJson(CLOUD_KEY);
+      if (cache && cache.namn === S.acc.namn && Array.isArray(cache.events)) S.events = cache.events.map(clean).filter(Boolean);
+      else S.loading = true;
+      render();
+      await pull(true);
+      migrateLocal();
+      return;
+    }
     const c = window.claude;
     if (!c || typeof c.use !== 'function') { useLocal(); return; }
     let db = null, user = null, assets = null;
