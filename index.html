@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Dagteljar">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="dagteljar-versjon" content="43d5b7e570e8">
+<meta name="dagteljar-versjon" content="68985b92cbaf">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
@@ -171,6 +171,19 @@ svg{display:block}
 .tile.done .tile-art{opacity:.5}
 
 #main{display:flex;flex-direction:column;gap:34px}
+
+/* Mappa nedst: lukka er ho ei enkel rad, open viser ho korta */
+.folder-head{display:flex;align-items:center;gap:12px;width:100%;padding:12px 14px;border:0;border-radius:12px;background:var(--paper);box-shadow:var(--shadow);color:var(--ink);cursor:pointer;text-align:left}
+.folder-ic{display:grid;place-items:center;flex:none;width:42px;height:42px;border-radius:10px;background:var(--field);color:var(--ink-2)}
+.folder-ic svg{width:23px;height:23px}
+.folder-txt{display:flex;flex-direction:column;flex:1;min-width:0}
+.folder-t{font-weight:700;font-size:18px;line-height:1.25}
+.folder-s{font-size:14px;color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chev{flex:none;color:var(--ink-2);transition:transform .2s}
+.chev svg{width:22px;height:22px}
+.folder-head[aria-expanded="true"] .chev{transform:rotate(180deg)}
+.d-place{display:flex;flex-direction:column;gap:7px;padding:16px 20px 0;border-top:1px solid var(--line);margin-top:10px}
+.d-place > span{font-size:14px;font-weight:600;color:var(--ink-2)}
 .foot{margin:0;font-size:13.5px;color:var(--ink-2);max-width:62ch}
 
 /* Illustrasjonar */
@@ -348,6 +361,8 @@ input[type="date"].input,input[type="time"].input{-webkit-appearance:none;appear
     edit: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16v4z" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linejoin="round"/><path d="M13.5 6.5l4 4" stroke="currentColor" stroke-width="1.8"/></svg>',
     trash: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4.5h6V7M6.5 7l1 13h9l1-13" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linejoin="round" stroke-linecap="round"/></svg>',
     user: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8.5" r="4" stroke="currentColor" stroke-width="1.9" fill="none"/><path d="M4.5 20c1.2-3.8 4-5.6 7.5-5.6s6.3 1.8 7.5 5.6" stroke="currentColor" stroke-width="1.9" fill="none" stroke-linecap="round"/></svg>',
+    folder: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7.5A2.5 2.5 0 0 1 5.5 5h3.6l2.2 2.2h7.2A2.5 2.5 0 0 1 21 9.7v7.8a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 17.5z" stroke="currentColor" stroke-width="1.9" fill="none" stroke-linejoin="round"/></svg>',
+    chev: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9.5l6 6 6-6" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>',
     refresh: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M21 3v5h-5" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>',
   };
 
@@ -618,6 +633,9 @@ input[type="date"].input,input[type="time"].input{-webkit-appearance:none;appear
   // ---------- Tilstand og lagring ----------
   const S = { events: [], mode: 'local', loading: !!(window.claude && window.claude.use), canWrite: true, col: null, assets: null, memoryOnly: false, detailId: null, lastFocus: null, acc: null, synced: 0, offline: false };
   let F = null, A = null;
+  // Om mappa er open, hugsar kvar eining for seg.
+  const FOLDER_KEY = 'dagteljar.mappe';
+  try { S.folderOpen = localStorage.getItem(FOLDER_KEY) === '1'; } catch { S.folderOpen = false; }
 
   // Bilete: { art } (ferdig illustrasjon), { asset } (claude.ai), { cloud } (kontoen), { data } (lagra på eininga).
   function normPhoto(p) {
@@ -642,6 +660,7 @@ input[type="date"].input,input[type="time"].input{-webkit-appearance:none;appear
       repeat: raw.repeat && typeof raw.repeat === 'object' ? { unit: UNIT_NAMES[raw.repeat.unit] ? raw.repeat.unit : 'none', every: Math.min(99, Math.max(1, raw.repeat.every | 0 || 1)) } : { unit: 'none', every: 1 },
       rule: raw.kind === 'up' ? null : rule,
       color: COLORS.includes(raw.color) ? raw.color : 'rogn',
+      place: raw.place === 'pin' || raw.place === 'mappe' ? raw.place : null,
       photo: normPhoto(raw.photo),
       showAge: !!raw.showAge,
       template: typeof raw.template === 'string' ? raw.template : null,
@@ -929,6 +948,19 @@ input[type="date"].input,input[type="time"].input{-webkit-appearance:none;appear
       + `<div class="grid">${rows.map(r => pageHTML(r.ev, r.st, now, false)).join('')}</div></section>`;
   }
 
+  // Mappa: lukka viser ho berre kor mange som ligg der og kva som kjem først.
+  function folderHTML(rows, now) {
+    const n = rows.length, first = rows[0];
+    const peek = first.st.phase === 'since' ? first.ev.title : `${first.ev.title} ${inText(first.st.days)}`;
+    const sub = `${n} ${pl(n, 'nedteljing', 'nedteljingar')}. Først: ${peek}`;
+    return `<section class="group folder">`
+      + `<button type="button" class="folder-head" data-folder aria-expanded="${S.folderOpen}" aria-controls="folderGrid">`
+      + `<span class="folder-ic">${ICON.folder}</span><span class="folder-txt"><span class="folder-t">Mappa</span><span class="folder-s">${esc(sub)}</span></span>`
+      + `<span class="chev">${ICON.chev}</span></button>`
+      + (S.folderOpen ? `<div class="grid" id="folderGrid">${rows.map(r => pageHTML(r.ev, r.st, now, false)).join('')}</div>` : '')
+      + `</section>`;
+  }
+
   function tplEvent(t, today) {
     if (t.rule) {
       return { title: t.title, kind: 'down', date: ymd(firstOcc({ rule: t.rule }, today)), time: '', repeat: { unit: 'year', every: 1 }, rule: t.rule, color: t.color, photo: { art: t.art }, template: t.key };
@@ -987,9 +1019,16 @@ input[type="date"].input,input[type="time"].input{-webkit-appearance:none;appear
     konto.setAttribute('aria-label', S.acc ? `Konto: innlogga som ${S.acc.namn}` : 'Logg inn for å synke');
 
     const rows = S.events.map(ev => ({ ev, st: status(ev, now) }));
-    const downs = rows.filter(r => r.st.phase !== 'since').sort((a, b) => a.st.days - b.st.days || a.ev.title.localeCompare(b.ev.title, 'nb'));
-    const ups = rows.filter(r => r.st.phase === 'since').sort((a, b) => (a.st.ended ? 1 : 0) - (b.st.ended ? 1 : 0) || (a.st.ended ? a.st.days - b.st.days : b.st.days - a.st.days));
+    const byDown = (a, b) => a.st.days - b.st.days || a.ev.title.localeCompare(b.ev.title, 'nb');
+    const byUp = (a, b) => (a.st.ended ? 1 : 0) - (b.st.ended ? 1 : 0) || (a.st.ended ? a.st.days - b.st.days : b.st.days - a.st.days);
+    // Det som ligg i mappa, er med verken i Neste eller i lista. Det står samla nedst.
+    const shown = rows.filter(r => r.ev.place !== 'mappe');
+    const downs = shown.filter(r => r.st.phase !== 'since').sort(byDown);
+    const ups = shown.filter(r => r.st.phase === 'since').sort(byUp);
+    const folder = rows.filter(r => r.ev.place === 'mappe');
+    const folderRows = folder.filter(r => r.st.phase !== 'since').sort(byDown).concat(folder.filter(r => r.st.phase === 'since').sort(byUp));
     const hero = downs[0] || ups.find(r => !r.st.ended) || null;
+    const pinned = downs.concat(ups).filter(r => r !== hero && r.ev.place === 'pin');
 
     let html = '';
     if (CLOUD_OK && !S.acc && !S.loading) {
@@ -997,18 +1036,20 @@ input[type="date"].input,input[type="time"].input{-webkit-appearance:none;appear
     }
     if (S.loading) {
       html += `<section><div class="blank"><span class="band"></span><span class="perf" aria-hidden="true"></span><div class="blank-in"><h2>Hentar nedteljingane dine</h2><p>Det tek berre eit augeblikk.</p></div></div></section>`;
-    } else if (!hero) {
+    } else if (!S.events.length) {
       html += `<section><div class="blank"><span class="band"></span><span class="perf" aria-hidden="true"></span><div class="blank-in">`
         + `<h2>Ingen nedteljingar enno</h2><p>Legg til ein bursdag, jula eller dagen hunden kom i hus. Under «Ny» finn du forslag med ferdige bilete.</p>`
         + (S.canWrite ? `<button type="button" class="btn btn-primary" data-new>${ICON.plus}<span>Ny nedteljing</span></button>` : '')
         + `</div></div></section>`;
-    } else {
+    } else if (hero) {
       html += `<section aria-label="Neste"><p class="label">${hero.st.phase === 'since' ? 'Tel opp' : 'Neste'}</p>${pageHTML(hero.ev, hero.st, now, true)}</section>`;
     }
-    const laterDown = downs.filter(r => r !== hero);
+    if (pinned.length) html += groupHTML('Festa', pinned, now);
+    const laterDown = downs.filter(r => r !== hero && r.ev.place !== 'pin');
     if (laterDown.length) html += groupHTML('Seinare', laterDown, now);
-    const restUp = ups.filter(r => r !== hero);
+    const restUp = ups.filter(r => r !== hero && r.ev.place !== 'pin');
     if (restUp.length) html += groupHTML('Tel opp', restUp, now);
+    if (folderRows.length) html += folderHTML(folderRows, now);
 
     if (html !== lastMain) { main.innerHTML = html; lastMain = html; }
 
@@ -1091,6 +1132,7 @@ input[type="date"].input,input[type="time"].input{-webkit-appearance:none;appear
         ? `<div class="tick" aria-hidden="true">${tv.v.map((x, i) => `<div><b data-t="${i}" style="${tickFit(fmt(x))}">${fmt(x)}</b><span data-tl="${i}">${TICK_NAMES[i][x === 1 ? 0 : 1]}</span></div>`).join('')}</div>`
         : `<p class="today-msg">I dag er dagen. Kos deg!</p>`)
       + `<dl class="facts">${facts.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('')}</dl>`
+      + (S.canWrite ? `<div class="d-place"><span>Vis på sida</span>${placeSegHTML(ev.place)}</div>` : '')
       + (S.canWrite ? `<div class="actions"><button type="button" class="btn" data-edit="${esc(ev.id)}">${ICON.edit}<span>Endre</span></button><button type="button" class="btn btn-danger" data-del="${esc(ev.id)}">${ICON.trash}<span>Slett</span></button></div>` : '<div style="height:16px"></div>');
   }
   const detailSig = (ev, now) => { const st = status(ev, now); return st.phase + st.days + JSON.stringify(ev); };
@@ -1182,6 +1224,7 @@ input[type="date"].input,input[type="time"].input{-webkit-appearance:none;appear
       rule: init.rule || null,
       color: COLORS.includes(init.color) ? init.color : 'rogn',
       template: init.template || null,
+      place: init.place === 'pin' || init.place === 'mappe' ? init.place : null,
       photo: normPhoto(init.photo),
       created: init.created || Date.now(),
       ownFile: null, ownPreview: null, busy: false,
@@ -1209,12 +1252,28 @@ input[type="date"].input,input[type="time"].input{-webkit-appearance:none;appear
       + `<div id="everyRow"><div class="every"><span>Kvar</span><input class="input" id="fEvery" type="number" inputmode="numeric" min="1" max="99" value="${F.every}" aria-label="Kor ofte"><span id="everyUnit"></span></div><p class="hint" id="everyHint"></p></div>`
       + `<label class="check" id="ageRow"><input type="checkbox" id="fAge"${F.showAge ? ' checked' : ''}><span>Vis alder, til dømes «fyller 10 år»</span></label>`
       + `</fieldset>`
+      + `<fieldset class="field"><legend>Vis på sida</legend>${placeSegHTML()}<p class="hint">«Fest øvst» viser ho rett under Neste. «I mappa» legg ho i mappa nedst på sida, så ho ikkje tek så stor plass.</p></fieldset>`
       + `<fieldset class="field"><legend>Farge</legend><div class="swatches">${COLORS.map(c => `<label class="sw" style="--band:var(--c-${c})"><input type="radio" name="fColor" value="${c}"${F.color === c ? ' checked' : ''} aria-label="${COLOR_NAMES[c]}"><span></span></label>`).join('')}</div></fieldset>`
       + `<div class="field"><span>Bilete</span><div class="art-grid" id="artGrid">${artGridHTML()}</div>`
       + `<div class="photo-pick"><label class="btn"><input type="file" accept="image/*" id="fPhoto" class="sr">${ICON.image}<span>Bruk eige bilete</span></label></div></div>`
       + `<p class="form-err" id="formErr" role="alert"></p>`
       + `<div class="form-foot"><button type="button" class="btn" data-close>Avbryt</button><button type="submit" class="btn btn-primary" id="saveBtn">${editing ? 'Lagre endringane' : 'Legg til'}</button></div>`
       + `</form>`;
+  }
+  // Kvar på sida nedteljinga står: vanleg, festa rett under Neste, eller i mappa nedst.
+  function placeSegHTML(cur) {
+    return `<div class="seg" role="group" aria-label="Vis på sida">${[['', 'Vanleg'], ['pin', 'Fest øvst'], ['mappe', 'I mappa']]
+      .map(([v, l]) => `<button type="button" data-place="${v}"${cur === undefined ? '' : ` aria-pressed="${(v || null) === cur}"`}>${l}</button>`).join('')}</div>`;
+  }
+  async function setPlace(id, place) {
+    const ev = S.events.find(e => e.id === id);
+    if (!ev || ev.place === place) return;
+    const { id: _id, ...doc } = ev;
+    try {
+      await Store.put(id, { ...doc, place, updated: Date.now() });
+      refreshDetail();
+      toast(place === 'pin' ? 'Festa rett under Neste' : place === 'mappe' ? 'Lagt i mappa' : 'Står som vanleg');
+    } catch (e) { toast(errText(e)); }
   }
   // Rutenett med «Ingen», eige bilete (om det finst) og dei ferdige illustrasjonane.
   function artGridHTML() {
@@ -1230,6 +1289,7 @@ input[type="date"].input,input[type="time"].input{-webkit-appearance:none;appear
     const today = dateOnly(new Date());
     $$('[data-kind]', layer).forEach(b => b.setAttribute('aria-pressed', String(b.dataset.kind === F.kind)));
     $$('[data-unit]', layer).forEach(b => b.setAttribute('aria-pressed', String(b.dataset.unit === F.unit)));
+    $$('[data-place]', layer).forEach(b => b.setAttribute('aria-pressed', String((b.dataset.place || null) === F.place)));
     const ruleOn = !!F.rule && F.kind === 'down';
     $('#ruleNote', layer).hidden = !ruleOn;
     $('#dateRow', layer).hidden = ruleOn;
@@ -1271,6 +1331,7 @@ input[type="date"].input,input[type="time"].input{-webkit-appearance:none;appear
         repeat: form.kind === 'down' ? { unit: ruleOn ? 'year' : form.unit, every: ruleOn ? 1 : Math.min(99, Math.max(1, form.every | 0 || 1)) } : { unit: 'none', every: 1 },
         rule: ruleOn ? form.rule : null,
         color: form.color,
+        place: form.place,
         photo: photo || null,
         showAge: form.kind === 'down' && !ruleOn && form.unit === 'year' && form.showAge,
         template: form.template,
@@ -1377,9 +1438,14 @@ input[type="date"].input,input[type="time"].input{-webkit-appearance:none;appear
 
   // ---------- Hendingar ----------
   main.addEventListener('click', e => {
-    const el = e.target.closest('[data-open],[data-new],[data-login]');
+    const el = e.target.closest('[data-open],[data-new],[data-login],[data-folder]');
     if (!el) return;
-    if (el.dataset.open) openDetail(el.dataset.open);
+    if ('folder' in el.dataset) {
+      S.folderOpen = !S.folderOpen;
+      try { localStorage.setItem(FOLDER_KEY, S.folderOpen ? '1' : ''); } catch { /* lagring sperra */ }
+      render();
+    }
+    else if (el.dataset.open) openDetail(el.dataset.open);
     else if ('new' in el.dataset) openPick();
     else if ('login' in el.dataset) openAccount('inn');
   });
@@ -1388,7 +1454,7 @@ input[type="date"].input,input[type="time"].input{-webkit-appearance:none;appear
 
   layer.addEventListener('click', e => {
     if (e.target === layer) { closeLayer(); return; }
-    const el = e.target.closest('[data-close],[data-edit],[data-del],[data-kind],[data-unit],[data-art],[data-tab],[data-logout],[data-sync],[data-new],[data-tpl],[data-start],[data-open],#ruleClear');
+    const el = e.target.closest('[data-close],[data-edit],[data-del],[data-kind],[data-unit],[data-place],[data-art],[data-tab],[data-logout],[data-sync],[data-new],[data-tpl],[data-start],[data-open],#ruleClear');
     if (!el) return;
     const today = dateOnly(new Date());
     if ('close' in el.dataset) closeLayer();
@@ -1416,6 +1482,11 @@ input[type="date"].input,input[type="time"].input{-webkit-appearance:none;appear
       syncForm();
     }
     else if (F && el.dataset.unit) { F.unit = el.dataset.unit; syncForm(); }
+    else if ('place' in el.dataset) {
+      const place = el.dataset.place || null;
+      if (F) { F.place = place; syncForm(); }
+      else if (S.detailId) setPlace(S.detailId, place);
+    }
     else if (F && el.id === 'ruleClear') { F.date = ymd(firstOcc({ rule: F.rule }, dateOnly(new Date()))); F.rule = null; F.unit = 'year'; $('#fDate', layer).value = F.date; syncForm(); }
   });
   layer.addEventListener('input', e => {
