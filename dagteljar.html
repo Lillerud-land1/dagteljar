@@ -101,7 +101,7 @@ svg{display:block}
 .perf{flex:none;height:9px;background:radial-gradient(circle at 5px 4.5px,var(--ground) 2px,transparent 2.6px) 1px 0/10px 9px repeat-x}
 .body{container-type:inline-size;display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 10px 15px;min-width:0}
 .num{--k:46;font-family:var(--f-num);font-weight:800;line-height:.88;font-size:64px;font-size:calc(var(--k)*1cqi);font-variant-numeric:tabular-nums;white-space:nowrap}
-.num.l1{--k:60}.num.l2{--k:56}.num.l3{--k:47}.num.l4{--k:44}.num.l5{--k:40}.num.l6{--k:34}
+.num.l1{--k:60}.num.l2{--k:56}.num.l3{--k:47}.num.l4{--k:44}.num.l5{--k:40}.num.l6{--k:34}.num.l7{--k:29}
 .soon .num{color:var(--raud)}
 .ended .num{color:var(--ink-2)}
 .unit{font-weight:600;font-size:14px}
@@ -207,7 +207,7 @@ html.ptr,html.ptr body{overscroll-behavior-y:none}
 .d-count .unit{font-size:18px}
 .d-count .extra{font-size:15px}
 .tick{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;padding:10px 20px 18px}
-.tick div{display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 4px 8px;border-radius:10px;background:var(--field)}
+.tick div{container-type:inline-size;display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 4px 8px;border-radius:10px;background:var(--field)}
 .tick b{font-family:var(--f-num);font-weight:700;font-size:32px;line-height:1;font-variant-numeric:tabular-nums}
 .tick span{font-size:12.5px;color:var(--ink-2)}
 .today-msg{margin:0;padding:4px 20px 16px;text-align:center;font-weight:600;color:var(--ink-2)}
@@ -468,24 +468,31 @@ input[type="date"].input,input[type="time"].input{-webkit-appearance:none;appear
 
   // ---------- Datoar ----------
   const pad = n => String(n).padStart(2, '0');
-  const ymd = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  const ymd = d => `${String(d.getFullYear()).padStart(4, '0')}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  // new Date(y, …) og Date.UTC(y, …) gjer år 0–99 om til 1900–1999. setFullYear gjer ikkje det,
+  // så år 1 blir år 1 og ikkje 1901.
+  function mkDate(y, m, d, h = 0, mi = 0) {
+    const x = new Date(2000, 0, 1, h, mi);
+    x.setFullYear(y, m, d);
+    return x;
+  }
   function parseYmd(s) {
     const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s || '');
-    return m ? new Date(+m[1], +m[2] - 1, +m[3]) : null;
+    return m && +m[1] > 0 ? mkDate(+m[1], +m[2] - 1, +m[3]) : null;
   }
-  const dateOnly = d => new Date(d.getFullYear(), d.getMonth(), d.getDate());
-  const dayNum = d => Math.round(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 864e5);
-  const addDays = (d, n) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
-  const daysIn = (y, m) => new Date(y, m + 1, 0).getDate();
+  const dateOnly = d => mkDate(d.getFullYear(), d.getMonth(), d.getDate());
+  const dayNum = d => { const t = new Date(0); t.setUTCFullYear(d.getFullYear(), d.getMonth(), d.getDate()); return Math.round(t / 864e5); };
+  const addDays = (d, n) => mkDate(d.getFullYear(), d.getMonth(), d.getDate() + n);
+  const daysIn = (y, m) => mkDate(y, m + 1, 0).getDate();
   function addMonths(d, n) {
     const t = d.getMonth() + n;
     const y = d.getFullYear() + Math.floor(t / 12);
     const m = ((t % 12) + 12) % 12;
-    return new Date(y, m, Math.min(d.getDate(), daysIn(y, m)));
+    return mkDate(y, m, Math.min(d.getDate(), daysIn(y, m)));
   }
   function withTime(d, t) {
     const m = /^(\d{1,2}):(\d{2})/.exec(t || '');
-    return m ? new Date(d.getFullYear(), d.getMonth(), d.getDate(), +m[1], +m[2]) : new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    return m ? mkDate(d.getFullYear(), d.getMonth(), d.getDate(), +m[1], +m[2]) : dateOnly(d);
   }
   function isoWeek(d) {
     const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
@@ -890,7 +897,7 @@ input[type="date"].input,input[type="time"].input{-webkit-appearance:none;appear
     const ph = photoHTML(ev.photo, true);
     const soon = st.phase === 'today' || (st.phase === 'down' && st.days <= 7);
     const cls = ['page', big && 'big', ph && 'has-photo', soon && 'soon', st.ended && 'ended'].filter(Boolean).join(' ');
-    const L = Math.min(6, Math.max(1, c.num.length));
+    const L = Math.min(7, Math.max(1, c.num.length));
     return `<button type="button" class="${cls}" data-open="${esc(ev.id)}" style="--band:var(--c-${ev.color})" aria-label="${esc(`${ev.title}: ${c.num} ${c.unit}, ${c.when}${c.extra ? ', ' + c.extra : ''}`)}">`
       + `<span class="band">${ph}<span class="band-title">${esc(ev.title)}</span></span>`
       + `<span class="perf" aria-hidden="true"></span>`
@@ -1021,6 +1028,8 @@ input[type="date"].input,input[type="time"].input{-webkit-appearance:none;appear
     const s = Math.floor(Math.max(0, ms) / 1000);
     return { ms, v: [Math.floor(s / 86400), Math.floor((s % 86400) / 3600), Math.floor((s % 3600) / 60), s % 60] };
   }
+  // Store tal (til dømes dagar sidan år 1) blir mindre så dei får plass i ruta.
+  const tickFit = s => `font-size:min(32px,${Math.floor(220 / Math.max(1, s.length))}cqi)`;
   const TICK_NAMES = [['dag', 'dagar'], ['time', 'timar'], ['minutt', 'minutt'], ['sekund', 'sekund']];
 
   function detailInner(ev, now) {
@@ -1053,14 +1062,14 @@ input[type="date"].input,input[type="time"].input{-webkit-appearance:none;appear
     }
     const tv = tickValues(ev, st, now);
     const showTick = !(st.phase === 'today' && tv.ms <= 0);
-    const L = Math.min(6, Math.max(1, c.num.length));
+    const L = Math.min(7, Math.max(1, c.num.length));
     const soon = st.phase === 'today' || (st.phase === 'down' && st.days <= 7);
     const unitLine = st.phase === 'today' ? 'er dagen' : `${c.unit} ${st.phase === 'since' ? '' : esc(ev.title)}`.trim();
     return `<button type="button" class="x" data-close aria-label="Lukk">${ICON.x}</button>`
       + `<div class="d-media${ph ? ' has-photo' : ''}" style="--band:var(--c-${ev.color})">${ph}<h2 class="d-title" id="sheetTitle">${esc(ev.title)}</h2></div>`
       + `<div class="d-count${soon ? ' soon' : ''}${st.ended ? ' ended' : ''}"><span class="num l${L}">${esc(c.num)}</span><span class="unit">${unitLine}</span>${c.extra ? `<span class="extra">${esc(c.extra)}</span>` : ''}</div>`
       + (showTick
-        ? `<div class="tick" aria-hidden="true">${tv.v.map((x, i) => `<div><b data-t="${i}">${fmt(x)}</b><span data-tl="${i}">${TICK_NAMES[i][x === 1 ? 0 : 1]}</span></div>`).join('')}</div>`
+        ? `<div class="tick" aria-hidden="true">${tv.v.map((x, i) => `<div><b data-t="${i}" style="${tickFit(fmt(x))}">${fmt(x)}</b><span data-tl="${i}">${TICK_NAMES[i][x === 1 ? 0 : 1]}</span></div>`).join('')}</div>`
         : `<p class="today-msg">I dag er dagen. Kos deg!</p>`)
       + `<dl class="facts">${facts.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('')}</dl>`
       + (S.canWrite ? `<div class="actions"><button type="button" class="btn" data-edit="${esc(ev.id)}">${ICON.edit}<span>Endre</span></button><button type="button" class="btn btn-danger" data-del="${esc(ev.id)}">${ICON.trash}<span>Slett</span></button></div>` : '<div style="height:16px"></div>');
@@ -1103,7 +1112,7 @@ input[type="date"].input,input[type="time"].input{-webkit-appearance:none;appear
     const { v } = tickValues(ev, status(ev, now), now);
     v.forEach((x, i) => {
       const b = $(`[data-t="${i}"]`, sheet), l = $(`[data-tl="${i}"]`, sheet);
-      if (b && b.textContent !== fmt(x)) b.textContent = fmt(x);
+      if (b && b.textContent !== fmt(x)) { b.textContent = fmt(x); b.style.cssText = tickFit(fmt(x)); }
       if (l) l.textContent = TICK_NAMES[i][x === 1 ? 0 : 1];
     });
   }
