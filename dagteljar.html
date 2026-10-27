@@ -1,0 +1,1036 @@
+<title>Dagteljar</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: avrivingskalender. Kvar nedteljing er ei kalenderside med farga topp (eller bilete),
+   perforering og eit stort tal. Neste hending står stort øvst, resten i eit rutenett under. */
+:root{
+  --ground:#E5E8ED;
+  --paper:#FFFFFF;
+  --field:#F3F5F8;
+  --ink:#161B25;
+  --ink-2:#586172;
+  --line:#D2D7DF;
+  --raud:#D21F28;
+  --focus:#2450B5;
+  --c-rogn:#DE6816;
+  --c-raud:#C8232B;
+  --c-gran:#1D6A46;
+  --c-fjord:#2450B5;
+  --c-lyng:#7A3DA6;
+  --c-natt:#262C3A;
+  --on-band:#FFFFFF;
+  --shadow:0 1px 1px rgba(22,27,37,.06),0 10px 24px -14px rgba(22,27,37,.38);
+  --shadow-hi:0 1px 1px rgba(22,27,37,.08),0 16px 32px -14px rgba(22,27,37,.45);
+  --backdrop:rgba(14,18,27,.52);
+  --f-num:"Big Shoulders Display","Arial Narrow","Roboto Condensed",Impact,sans-serif;
+  --f-body:"Schibsted Grotesk",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --r-page:6px;
+  --r-sheet:18px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ground:#0E1117; --paper:#1A1F29; --field:#11151D; --ink:#ECEEF2; --ink-2:#9AA3B3;
+    --line:#2C3341; --raud:#FF5A60; --focus:#86A8FF; --c-natt:#3B4357;
+    --shadow:0 1px 0 rgba(0,0,0,.4),0 12px 28px -16px rgba(0,0,0,.85);
+    --shadow-hi:0 1px 0 rgba(0,0,0,.4),0 18px 36px -16px rgba(0,0,0,.95);
+    --backdrop:rgba(0,0,0,.62);
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0E1117; --paper:#1A1F29; --field:#11151D; --ink:#ECEEF2; --ink-2:#9AA3B3;
+  --line:#2C3341; --raud:#FF5A60; --focus:#86A8FF; --c-natt:#3B4357;
+  --shadow:0 1px 0 rgba(0,0,0,.4),0 12px 28px -16px rgba(0,0,0,.85);
+  --shadow-hi:0 1px 0 rgba(0,0,0,.4),0 18px 36px -16px rgba(0,0,0,.95);
+  --backdrop:rgba(0,0,0,.62);
+  color-scheme:dark;
+}
+
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+html.locked,html.locked body{overflow:hidden}
+body{background:var(--ground);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.45;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+svg{display:block}
+
+.wrap{max-width:1040px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 56px;display:flex;flex-direction:column;gap:30px}
+
+/* Topp */
+.top{display:flex;align-items:center;gap:14px}
+.mini{flex:none;width:50px;display:flex;flex-direction:column;border-radius:5px;overflow:hidden;background:var(--paper);box-shadow:var(--shadow);text-align:center}
+.mini-m{background:var(--band,var(--raud));color:var(--on-band);font-size:11px;font-weight:700;letter-spacing:.03em;line-height:1;padding:4px 0 3px;min-height:18px}
+.mini-d{display:grid;place-items:center;min-height:34px;font-family:var(--f-num);font-weight:800;font-size:28px;line-height:1;padding:2px 0 4px;font-variant-numeric:tabular-nums}
+.mini-d svg{width:22px;height:22px}
+.top .mini{--band:var(--raud)}
+.brand{flex:1;min-width:0}
+.brand h1{margin:0;font-family:var(--f-num);font-weight:800;font-size:36px;line-height:.92;letter-spacing:.004em}
+.brand p{margin:4px 0 0;color:var(--ink-2);font-size:14px}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:44px;padding:0 18px;border-radius:999px;border:1px solid var(--line);background:var(--paper);color:var(--ink);font-weight:600;font-size:15px;cursor:pointer;white-space:nowrap;transition:transform .1s}
+.btn svg{width:18px;height:18px;flex:none}
+.btn:active{transform:scale(.97)}
+.btn:disabled{opacity:.6;cursor:default;transform:none}
+.btn-primary{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+.btn-danger{color:var(--raud)}
+.btn-danger.armed{background:var(--raud);border-color:var(--raud);color:#fff}
+.btn:focus-within:has(input:focus-visible){outline:3px solid var(--focus);outline-offset:2px}
+
+/* Seksjonar */
+.label{margin:0 0 10px;font-size:15px;font-weight:600;color:var(--ink-2)}
+.group{display:flex;flex-direction:column;gap:12px}
+.group-head{display:flex;align-items:baseline;gap:8px}
+.group h2{margin:0;font-size:21px;font-weight:700;letter-spacing:-.005em;text-wrap:balance}
+.count{font-size:15px;color:var(--ink-2);font-weight:500;font-variant-numeric:tabular-nums}
+.lede{margin:-6px 0 0;color:var(--ink-2);font-size:15px;max-width:60ch}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(152px,1fr));gap:14px}
+
+/* Kalenderside */
+.page{position:relative;display:flex;flex-direction:column;width:100%;padding:0;border:0;border-radius:var(--r-page);background:var(--paper);color:var(--ink);box-shadow:var(--shadow);overflow:hidden;cursor:pointer;text-align:center;transition:box-shadow .2s,transform .12s}
+.page:hover{box-shadow:var(--shadow-hi)}
+.page:active{transform:scale(.985)}
+.band{position:relative;display:flex;align-items:flex-end;min-height:58px;padding:10px 12px;background:var(--band,var(--c-rogn));color:var(--on-band);text-align:left;overflow:hidden}
+.band img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.has-photo .band{aspect-ratio:16/11;min-height:0}
+.has-photo .band::after{content:"";position:absolute;inset:0;background:linear-gradient(to top,rgba(8,10,16,.74),rgba(8,10,16,0) 60%)}
+.band-title{position:relative;z-index:1;font-weight:700;font-size:15px;line-height:1.2;text-wrap:balance;overflow-wrap:anywhere}
+.perf{flex:none;height:9px;background:radial-gradient(circle at 5px 4.5px,var(--ground) 2px,transparent 2.6px) 1px 0/10px 9px repeat-x}
+.body{container-type:inline-size;display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 10px 15px;min-width:0}
+.num{--k:46;font-family:var(--f-num);font-weight:800;line-height:.88;font-size:64px;font-size:calc(var(--k)*1cqi);font-variant-numeric:tabular-nums;white-space:nowrap}
+.num.l1{--k:60}.num.l2{--k:56}.num.l3{--k:47}.num.l4{--k:44}.num.l5{--k:40}.num.l6{--k:34}
+.soon .num{color:var(--raud)}
+.ended .num{color:var(--ink-2)}
+.unit{font-weight:600;font-size:14px}
+.when{font-size:13px;color:var(--ink-2);text-wrap:balance}
+.extra{font-size:12.5px;font-weight:700;color:var(--raud)}
+
+.page.big .band{min-height:120px;padding:16px 18px}
+.page.big.has-photo .band{aspect-ratio:16/10;min-height:0}
+.page.big .band-title{font-size:23px}
+.page.big .body{padding:8px 16px 22px;gap:5px}
+.page.big .num{font-size:min(calc(var(--k)*1.05cqi),170px)}
+.page.big .unit{font-size:18px}
+.page.big .when{font-size:15px}
+.page.big .extra{font-size:14px}
+@media (min-width:720px){
+  .page.big{display:grid;grid-template-columns:minmax(0,1.15fr) 9px minmax(0,1fr);min-height:320px}
+  .page.big .band,.page.big.has-photo .band{aspect-ratio:auto;min-height:100%}
+  .page.big .perf{height:auto;background:radial-gradient(circle at 4.5px 5px,var(--ground) 2px,transparent 2.6px) 0 1px/9px 10px repeat-y}
+  .page.big .body{justify-content:center;padding:28px 24px}
+}
+
+/* Tom side og lasting */
+.blank{display:flex;flex-direction:column;border-radius:var(--r-page);background:var(--paper);box-shadow:var(--shadow);overflow:hidden}
+.blank .band{--band:var(--line);min-height:44px}
+.blank-in{display:flex;flex-direction:column;align-items:flex-start;gap:10px;padding:16px 20px 22px}
+.blank h2{margin:0;font-size:22px;font-weight:700;text-wrap:balance}
+.blank p{margin:0;color:var(--ink-2);max-width:52ch}
+
+/* Forslag */
+.sugg-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}
+.sugg{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:12px;border:1px dashed var(--line);background:transparent;color:var(--ink);cursor:pointer;text-align:left;transition:background .15s}
+.sugg:hover{background:var(--paper)}
+.sugg .mini{width:44px;box-shadow:none;border:1px solid var(--line)}
+.sugg .mini-m{font-size:10px;min-height:16px}
+.sugg .mini-d{font-size:23px;min-height:28px}
+.sugg-txt{display:flex;flex-direction:column;min-width:0}
+.sugg-t{font-weight:600;font-size:15px;line-height:1.25}
+.sugg-s{font-size:13.5px;color:var(--ink-2)}
+.sugg.starter .mini{--band:var(--ink)}
+.sugg.starter .mini-d{color:var(--ink)}
+
+#main{display:flex;flex-direction:column;gap:34px}
+.foot{margin:0;font-size:13.5px;color:var(--ink-2);max-width:62ch}
+
+/* Ark (detaljar og skjema) */
+.layer{position:fixed;inset:0;z-index:40;display:flex;align-items:flex-end;justify-content:center;background:var(--backdrop);padding-top:max(24px,env(safe-area-inset-top,0px))}
+.sheet{position:relative;width:100%;max-width:560px;max-height:100%;overflow:auto;overscroll-behavior:contain;background:var(--paper);color:var(--ink);border-radius:var(--r-sheet) var(--r-sheet) 0 0;padding-bottom:env(safe-area-inset-bottom,0px);animation:rise .28s cubic-bezier(.2,.8,.2,1)}
+.sheet:focus{outline:none}
+@media (min-width:700px){
+  .layer{align-items:center;padding:32px}
+  .sheet{border-radius:var(--r-sheet);max-height:calc(100vh - 64px);padding-bottom:0}
+}
+@keyframes rise{from{transform:translateY(30px);opacity:0}to{transform:none;opacity:1}}
+.x{position:absolute;top:12px;right:12px;z-index:4;display:grid;place-items:center;width:40px;height:40px;border:0;border-radius:50%;background:rgba(8,10,16,.45);color:#fff;cursor:pointer}
+.x svg{width:20px;height:20px}
+.x.plain{position:static;background:var(--field);color:var(--ink);flex:none}
+
+.d-media{position:relative;display:flex;align-items:flex-end;min-height:150px;padding:56px 22px 20px;background:var(--band);color:var(--on-band);overflow:hidden}
+.d-media.has-photo{height:clamp(220px,64vw,360px)}
+.d-media img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.d-media.has-photo::after{content:"";position:absolute;inset:0;background:linear-gradient(to top,rgba(8,10,16,.75),rgba(8,10,16,0) 55%)}
+.d-title{position:relative;z-index:1;margin:0;font-size:28px;font-weight:700;line-height:1.12;text-wrap:balance;overflow-wrap:anywhere}
+.confetti{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:3}
+.d-count{container-type:inline-size;display:flex;flex-direction:column;align-items:center;gap:4px;padding:18px 20px 6px;text-align:center}
+.d-count .num{font-size:min(calc(var(--k)*1cqi),180px)}
+.d-count .unit{font-size:18px}
+.d-count .extra{font-size:15px}
+.tick{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;padding:10px 20px 18px}
+.tick div{display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 4px 8px;border-radius:10px;background:var(--field)}
+.tick b{font-family:var(--f-num);font-weight:700;font-size:32px;line-height:1;font-variant-numeric:tabular-nums}
+.tick span{font-size:12.5px;color:var(--ink-2)}
+.today-msg{margin:0;padding:4px 20px 16px;text-align:center;font-weight:600;color:var(--ink-2)}
+.facts{display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px 18px;margin:0;padding:16px 20px 6px;border-top:1px solid var(--line)}
+.facts dt{color:var(--ink-2);font-size:14.5px}
+.facts dd{margin:0;font-size:15px;font-weight:500}
+.actions{display:flex;flex-wrap:wrap;gap:10px;padding:16px 20px 22px}
+.actions .btn{flex:1 1 140px}
+
+/* Skjema */
+.form{display:flex;flex-direction:column;gap:18px;padding:18px 20px 0}
+.form-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.form-head h2{margin:0;font-size:23px;font-weight:700}
+.field{display:flex;flex-direction:column;gap:7px;min-width:0;margin:0;padding:0;border:0}
+.field > span,.field legend{padding:0;font-size:14px;font-weight:600;color:var(--ink-2)}
+.field legend{margin-bottom:7px}
+.field em{font-style:normal;font-weight:400}
+.input{width:100%;min-width:0;min-height:46px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--field);color:var(--ink);font:inherit;font-size:16px}
+.input:focus{outline:none;border-color:var(--focus);box-shadow:0 0 0 3px color-mix(in srgb,var(--focus) 28%,transparent)}
+input[type="date"].input,input[type="time"].input{-webkit-appearance:none;appearance:none}
+.row2{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);align-items:end;gap:12px}
+.seg{display:flex;gap:4px;padding:4px;border:1px solid var(--line);border-radius:12px;background:var(--field)}
+.seg button{flex:1;min-height:40px;padding:6px 8px;border:0;border-radius:8px;background:transparent;color:var(--ink-2);font-size:14.5px;font-weight:600;line-height:1.2;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--paper);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.14)}
+.every{display:flex;align-items:center;gap:8px;margin-top:10px;font-size:15px}
+.every .input{width:70px;text-align:center}
+.hint{margin:0;font-size:13.5px;color:var(--ink-2)}
+.check{display:flex;align-items:center;gap:10px;margin-top:10px;font-size:15px;cursor:pointer}
+.check input{width:20px;height:20px;margin:0;accent-color:var(--ink)}
+.swatches{display:flex;flex-wrap:wrap;gap:12px}
+.sw{position:relative;display:block}
+.sw input{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:pointer}
+.sw span{display:block;width:38px;height:38px;border-radius:50%;background:var(--band)}
+.sw input:checked + span{box-shadow:0 0 0 3px var(--paper),0 0 0 5px var(--ink)}
+.sw input:focus-visible + span{outline:3px solid var(--focus);outline-offset:5px}
+.photo-pick{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.thumb{width:88px;height:66px;border-radius:8px;object-fit:cover;background:var(--field)}
+.sr{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;clip:rect(0 0 0 0)}
+.rule-note{display:flex;flex-direction:column;align-items:flex-start;gap:6px;padding:12px 14px;border-radius:10px;background:var(--field);font-size:15px}
+.linkbtn{padding:0;border:0;background:none;color:var(--focus);font-weight:600;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.form-err{margin:0;color:var(--raud);font-size:14.5px;font-weight:600}
+.form-err:empty{display:none}
+.form-foot{position:sticky;bottom:0;display:flex;justify-content:flex-end;gap:10px;margin:0 -20px;padding:12px 20px calc(16px + env(safe-area-inset-bottom,0px));background:var(--paper);border-top:1px solid var(--line)}
+@media (min-width:700px){.form-foot{padding-bottom:16px}}
+
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));z-index:60;max-width:calc(100% - 32px);padding:11px 18px;border-radius:999px;background:var(--ink);color:var(--paper);font-size:14.5px;font-weight:600;text-align:center;opacity:0;pointer-events:none;transform:translate(-50%,16px);transition:opacity .2s,transform .2s}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+@media (prefers-reduced-motion:reduce){
+  .sheet{animation:none}
+  .page,.btn,.toast,.sugg{transition:none}
+}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="mini" aria-hidden="true"><span class="mini-m" id="todayM">okt.</span><span class="mini-d" id="todayD">27</span></div>
+    <div class="brand">
+      <h1>Dagteljar</h1>
+      <p id="todayText">&nbsp;</p>
+    </div>
+    <button class="btn btn-primary" id="addBtn" type="button" aria-label="Ny nedteljing" hidden></button>
+  </header>
+  <main id="main"></main>
+  <p class="foot" id="foot"></p>
+</div>
+<div class="layer" id="layer" hidden></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(() => {
+  'use strict';
+  document.documentElement.lang = 'nn';
+
+  const KEY = 'dagteljar.v1';
+  const $ = (s, r = document) => r.querySelector(s);
+  const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  const DAYS = ['sundag', 'måndag', 'tysdag', 'onsdag', 'torsdag', 'fredag', 'laurdag'];
+  const MONTHS = ['januar', 'februar', 'mars', 'april', 'mai', 'juni', 'juli', 'august', 'september', 'oktober', 'november', 'desember'];
+  const MON_S = ['jan.', 'feb.', 'mars', 'apr.', 'mai', 'juni', 'juli', 'aug.', 'sep.', 'okt.', 'nov.', 'des.'];
+  const nf = new Intl.NumberFormat('nb-NO');
+  const fmt = n => nf.format(n);
+  const pl = (n, one, many) => (n === 1 ? one : many);
+  const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+  const og = a => (a.length < 2 ? a.join('') : a.slice(0, -1).join(', ') + ' og ' + a[a.length - 1]);
+
+  const COLORS = ['rogn', 'raud', 'gran', 'fjord', 'lyng', 'natt'];
+  const COLOR_NAMES = { rogn: 'Rogn', raud: 'Raud', gran: 'Gran', fjord: 'Fjord', lyng: 'Lyng', natt: 'Natt' };
+  const UNIT_NAMES = { day: 'dag', week: 'veke', month: 'månad', year: 'år' };
+
+  const TEMPLATES = [
+    { key: 'halloween', title: 'Halloween', m: 9, d: 31, color: 'rogn' },
+    { key: 'farsdag', title: 'Farsdag', rule: { type: 'nth', month: 10, weekday: 0, nth: 2 }, color: 'fjord' },
+    { key: 'jul', title: 'Julaftan', m: 11, d: 24, color: 'raud' },
+    { key: 'nyttar', title: 'Nyttårsaftan', m: 11, d: 31, color: 'natt' },
+    { key: 'morsdag', title: 'Morsdag', rule: { type: 'nth', month: 1, weekday: 0, nth: 2 }, color: 'lyng' },
+    { key: 'paske', title: 'Påske', rule: { type: 'easter', offset: 0 }, color: 'gran' },
+    { key: '17mai', title: '17. mai', m: 4, d: 17, color: 'raud' },
+    { key: 'sankthans', title: 'Sankthansaftan', m: 5, d: 23, color: 'gran' },
+  ];
+
+  const ICON = {
+    plus: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" fill="none"/></svg>',
+    x: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" fill="none"/></svg>',
+    image: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2.5" stroke="currentColor" stroke-width="1.8" fill="none"/><circle cx="9" cy="10" r="1.8" fill="currentColor"/><path d="M4 17.5l5-5 4 4 3-3 4.5 4.5" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linejoin="round"/></svg>',
+    edit: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16v4z" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linejoin="round"/><path d="M13.5 6.5l4 4" stroke="currentColor" stroke-width="1.8"/></svg>',
+    trash: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4.5h6V7M6.5 7l1 13h9l1-13" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linejoin="round" stroke-linecap="round"/></svg>',
+    cake: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h16v-7a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v7z" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M4 15.2c2 1.5 4 1.5 5.3 0 1.4 1.5 4 1.5 5.4 0 1.3 1.5 3.3 1.5 5.3 0M12 11V7.5" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round"/><path d="M12 3c1 1.1 1.3 2 .7 2.7-.4.4-1 .4-1.4 0-.6-.7-.3-1.6.7-2.7z" fill="currentColor"/></svg>',
+    paw: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 12.2c-2.9 0-5.6 2.6-5.6 5.2 0 1.7 1.4 2.4 3 2.2 1-.1 1.7-.5 2.6-.5s1.6.4 2.6.5c1.6.2 3-.5 3-2.2 0-2.6-2.7-5.2-5.6-5.2z" fill="currentColor"/><ellipse cx="5.6" cy="10.6" rx="1.9" ry="2.4" fill="currentColor"/><ellipse cx="18.4" cy="10.6" rx="1.9" ry="2.4" fill="currentColor"/><ellipse cx="9.2" cy="6.4" rx="1.9" ry="2.5" fill="currentColor"/><ellipse cx="14.8" cy="6.4" rx="1.9" ry="2.5" fill="currentColor"/></svg>',
+  };
+
+  // ---------- Datoar ----------
+  const pad = n => String(n).padStart(2, '0');
+  const ymd = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  function parseYmd(s) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s || '');
+    return m ? new Date(+m[1], +m[2] - 1, +m[3]) : null;
+  }
+  const dateOnly = d => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const dayNum = d => Math.round(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 864e5);
+  const addDays = (d, n) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
+  const daysIn = (y, m) => new Date(y, m + 1, 0).getDate();
+  function addMonths(d, n) {
+    const t = d.getMonth() + n;
+    const y = d.getFullYear() + Math.floor(t / 12);
+    const m = ((t % 12) + 12) % 12;
+    return new Date(y, m, Math.min(d.getDate(), daysIn(y, m)));
+  }
+  function withTime(d, t) {
+    const m = /^(\d{1,2}):(\d{2})/.exec(t || '');
+    return m ? new Date(d.getFullYear(), d.getMonth(), d.getDate(), +m[1], +m[2]) : new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  }
+  function isoWeek(d) {
+    const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+    t.setUTCDate(t.getUTCDate() + 4 - (t.getUTCDay() || 7));
+    const y0 = new Date(Date.UTC(t.getUTCFullYear(), 0, 1));
+    return Math.ceil(((t - y0) / 864e5 + 1) / 7);
+  }
+  function easter(y) {
+    const a = y % 19, b = Math.floor(y / 100), c = y % 100, d = Math.floor(b / 4), e = b % 4;
+    const f = Math.floor((b + 8) / 25), g = Math.floor((b - f + 1) / 3), h = (19 * a + b - d - g + 15) % 30;
+    const i = Math.floor(c / 4), k = c % 4, l = (32 + 2 * e + 2 * i - h - k) % 7, m = Math.floor((a + 11 * h + 22 * l) / 451);
+    const n = h + l - 7 * m + 114;
+    return new Date(y, Math.floor(n / 31) - 1, (n % 31) + 1);
+  }
+  function ruleDate(r, y) {
+    if (r.type === 'easter') return addDays(easter(y), r.offset || 0);
+    if (r.type === 'nth') {
+      const first = new Date(y, r.month, 1);
+      return new Date(y, r.month, 1 + ((r.weekday - first.getDay() + 7) % 7) + (r.nth - 1) * 7);
+    }
+    return null;
+  }
+  function ruleText(r) {
+    if (r.type === 'easter') return r.offset === -1 ? 'påskeaftan' : r.offset ? `${r.offset} dagar etter 1. påskedag` : '1. påskedag';
+    return `${r.nth}. ${DAYS[r.weekday]} i ${MONTHS[r.month]}`;
+  }
+  function dateLabel(d, today, withYear) {
+    let s = `${DAYS[d.getDay()]} ${d.getDate()}. ${MONTHS[d.getMonth()]}`;
+    if (withYear || d.getFullYear() !== today.getFullYear()) s += ` ${d.getFullYear()}`;
+    return s;
+  }
+  function ymdDiff(a, b) {
+    let M = (b.getFullYear() - a.getFullYear()) * 12 + b.getMonth() - a.getMonth();
+    if (addMonths(a, M) > b) M--;
+    return { y: Math.floor(M / 12), m: M % 12, d: dayNum(b) - dayNum(addMonths(a, M)) };
+  }
+  function ymdLong(o) {
+    const p = [];
+    if (o.y) p.push(`${o.y} år`);
+    if (o.m) p.push(`${o.m} ${pl(o.m, 'månad', 'månader')}`);
+    if (o.d || !p.length) p.push(`${o.d} ${pl(o.d, 'dag', 'dagar')}`);
+    return og(p);
+  }
+  function ymdShort(o) {
+    const p = [];
+    if (o.y) p.push(`${o.y} år`);
+    if (o.m) p.push(`${o.m} ${pl(o.m, 'månad', 'månader')}`);
+    if (!o.y && o.d) p.push(`${o.d} ${pl(o.d, 'dag', 'dagar')}`);
+    return p.join(' og ');
+  }
+  const inText = d => (d === 0 ? 'i dag' : d === 1 ? 'i morgon' : `om ${fmt(d)} dagar`);
+  const durText = mins => (mins < 60 ? `${mins} min` : `${Math.floor(mins / 60)} t ${mins % 60} min`);
+  const nextMilestone = days => { const step = days < 1000 ? 100 : days < 10000 ? 500 : 1000; return (Math.floor(days / step) + 1) * step; };
+
+  // Første gong hendinga skjer på eller etter `ref` (dato utan klokkeslett).
+  function firstOcc(ev, ref) {
+    if (ev.rule) {
+      for (let y = ref.getFullYear(); y <= ref.getFullYear() + 2; y++) {
+        const d = ruleDate(ev.rule, y);
+        if (d && d >= ref) return d;
+      }
+      return null;
+    }
+    const base = parseYmd(ev.date);
+    if (!base) return null;
+    const r = ev.repeat || {};
+    const n = Math.max(1, r.every | 0 || 1);
+    if (!UNIT_NAMES[r.unit] || base >= ref) return base;
+    if (r.unit === 'day' || r.unit === 'week') {
+      const step = n * (r.unit === 'week' ? 7 : 1);
+      return addDays(base, Math.ceil((dayNum(ref) - dayNum(base)) / step) * step);
+    }
+    const stepM = n * (r.unit === 'year' ? 12 : 1);
+    let k = Math.floor(((ref.getFullYear() - base.getFullYear()) * 12 + ref.getMonth() - base.getMonth()) / stepM);
+    let d = addMonths(base, k * stepM);
+    while (d < ref) { k++; d = addMonths(base, k * stepM); }
+    return d;
+  }
+  const repeats = ev => !!ev.rule || !!UNIT_NAMES[ev.repeat && ev.repeat.unit];
+  function repeatText(ev) {
+    if (ev.rule) return 'Kvart år, ' + ruleText(ev.rule);
+    const r = ev.repeat || {};
+    const n = Math.max(1, r.every | 0 || 1);
+    if (!UNIT_NAMES[r.unit]) return '';
+    if (n === 1) return { day: 'Kvar dag', week: 'Kvar veke', month: 'Kvar månad', year: 'Kvart år' }[r.unit];
+    return `Kvar ${n}. ${UNIT_NAMES[r.unit]}`;
+  }
+  const ageAt = (ev, occ) => { const b = parseYmd(ev.date); return b ? occ.getFullYear() - b.getFullYear() : 0; };
+
+  function status(ev, now) {
+    const today = dateOnly(now);
+    if (ev.kind === 'up') {
+      const start = parseYmd(ev.date);
+      const diff = dayNum(today) - dayNum(start);
+      if (diff < 0) return { phase: 'down', occ: start, days: -diff, today };
+      return { phase: 'since', start, days: diff, today };
+    }
+    const occ = firstOcc(ev, today) || today;
+    const diff = dayNum(occ) - dayNum(today);
+    if (diff < 0) return { phase: 'since', start: occ, days: -diff, ended: true, today };
+    return { phase: diff === 0 ? 'today' : 'down', occ, days: diff, today };
+  }
+
+  // ---------- Tilstand og lagring ----------
+  const S = { events: [], mode: 'local', loading: !!(window.claude && window.claude.use), canWrite: true, col: null, assets: null, memoryOnly: false, detailId: null, lastFocus: null };
+  let F = null;
+
+  const validPhoto = p => p && typeof p === 'object' && ((typeof p.asset === 'string' && /^[0-9a-f]{32}$/i.test(p.asset)) || (typeof p.data === 'string' && p.data.startsWith('data:image/')));
+  function clean(raw) {
+    if (!raw || typeof raw.title !== 'string') return null;
+    const rule = raw.rule && typeof raw.rule === 'object' && (raw.rule.type === 'easter' || raw.rule.type === 'nth') ? raw.rule : null;
+    if (!parseYmd(raw.date) && !rule) return null;
+    return {
+      id: String(raw.id),
+      title: raw.title.slice(0, 80),
+      kind: raw.kind === 'up' ? 'up' : 'down',
+      date: parseYmd(raw.date) ? raw.date : '',
+      time: /^\d{1,2}:\d{2}$/.test(raw.time || '') ? raw.time : '',
+      repeat: raw.repeat && typeof raw.repeat === 'object' ? { unit: UNIT_NAMES[raw.repeat.unit] ? raw.repeat.unit : 'none', every: Math.min(99, Math.max(1, raw.repeat.every | 0 || 1)) } : { unit: 'none', every: 1 },
+      rule: raw.kind === 'up' ? null : rule,
+      color: COLORS.includes(raw.color) ? raw.color : 'rogn',
+      photo: validPhoto(raw.photo) ? raw.photo : null,
+      showAge: !!raw.showAge,
+      template: typeof raw.template === 'string' ? raw.template : null,
+      created: +raw.created || 0,
+    };
+  }
+  const photoSrc = p => (!validPhoto(p) ? '' : p.asset ? '/_blob/' + p.asset : p.data);
+
+  function readLocal() {
+    try {
+      const v = JSON.parse(localStorage.getItem(KEY) || '[]');
+      return Array.isArray(v) ? v.map(clean).filter(Boolean) : [];
+    } catch { return []; }
+  }
+  function writeLocal(list) {
+    try { localStorage.setItem(KEY, JSON.stringify(list)); S.memoryOnly = false; }
+    catch (e) {
+      if (e && (e.name === 'QuotaExceededError' || e.code === 22)) throw Object.assign(new Error('full'), { code: 'local_full' });
+      S.memoryOnly = true;
+    }
+  }
+  async function retryOnce(fn) {
+    try { return await fn(); }
+    catch (e) {
+      if (e && (e.code === 'unavailable' || e.code === 'store_unavailable')) {
+        await new Promise(r => setTimeout(r, 400 + Math.random() * 700));
+        return fn();
+      }
+      throw e;
+    }
+  }
+  const Store = {
+    async put(id, doc) {
+      if (S.mode === 'db') return retryOnce(() => S.col.doc(id).set(doc));
+      const next = S.events.filter(e => e.id !== id).concat([clean({ id, ...doc })]);
+      writeLocal(next);
+      S.events = next;
+      render();
+    },
+    async del(id) {
+      if (S.mode === 'db') return retryOnce(() => S.col.doc(id).delete());
+      const next = S.events.filter(e => e.id !== id);
+      writeLocal(next);
+      S.events = next;
+      render();
+    },
+  };
+  function dropAsset(id) {
+    if (S.assets && id) S.assets.delete(id).catch(() => {});
+  }
+  function errText(e) {
+    const c = e && e.code;
+    if (c === 'local_full') return 'Nettlesaren har ikkje meir plass. Fjern bilete frå nokre nedteljingar, eller vel eit mindre bilete.';
+    if (c === 'quota_exceeded') return 'Lagringa er full. Slett nokre gamle nedteljingar og prøv igjen.';
+    if (c === 'invalid_argument') return 'Du har ikkje løyve til å endre denne kalenderen.';
+    if (c === 'image') return 'Klarte ikkje å lese biletet. Prøv eit anna bilete.';
+    if (c === 'revoked' || c === 'not_granted') return 'Tilgangen til lagringa er borte. Last sida på nytt.';
+    return 'Fekk ikkje lagra. Sjekk nettet og prøv igjen.';
+  }
+
+  // ---------- Bilete ----------
+  function loadImage(src) {
+    return new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = () => rej(Object.assign(new Error('image'), { code: 'image' })); i.src = src; });
+  }
+  async function shrink(file, max, q) {
+    const url = URL.createObjectURL(file);
+    try {
+      const img = await loadImage(url);
+      const s = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
+      const w = Math.max(1, Math.round(img.naturalWidth * s)), h = Math.max(1, Math.round(img.naturalHeight * s));
+      const cv = document.createElement('canvas');
+      cv.width = w; cv.height = h;
+      const ctx = cv.getContext('2d');
+      ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h);
+      ctx.drawImage(img, 0, 0, w, h);
+      const blob = await new Promise(r => cv.toBlob(r, 'image/jpeg', q));
+      if (!blob) throw Object.assign(new Error('image'), { code: 'image' });
+      return blob;
+    } finally { URL.revokeObjectURL(url); }
+  }
+  const blobToData = b => new Promise((res, rej) => { const fr = new FileReader(); fr.onload = () => res(fr.result); fr.onerror = rej; fr.readAsDataURL(b); });
+  async function persistPhoto(file) {
+    if (S.assets) {
+      try {
+        const blob = await shrink(file, 1600, 0.85);
+        const r = await retryOnce(() => S.assets.upload(blob, { type: 'image/jpeg' }));
+        return { asset: r.id };
+      } catch (e) {
+        if (e && e.code === 'image') throw e;
+        // Fell tilbake til eit lite bilete lagra saman med nedteljinga.
+      }
+    }
+    let data = await blobToData(await shrink(file, 760, 0.74));
+    if (data.length > 170000) data = await blobToData(await shrink(file, 540, 0.62));
+    return { data };
+  }
+
+  // ---------- Teikning ----------
+  const main = $('#main'), layer = $('#layer'), toastEl = $('#toast');
+  let lastMain = '';
+
+  function cardData(ev, st, now) {
+    const t = st.today;
+    let num, unit, when = '', extra = '';
+    if (st.phase === 'today') {
+      num = 'I dag'; unit = 'er dagen';
+      const target = withTime(st.occ, ev.time);
+      when = ev.time && target > now ? `kl. ${ev.time}, om ${durText(Math.ceil((target - now) / 6e4))}` : dateLabel(st.occ, t);
+      if (ev.showAge) extra = `Fyller ${ageAt(ev, st.occ)} år`;
+    } else if (st.phase === 'down') {
+      num = fmt(st.days); unit = pl(st.days, 'dag til', 'dagar til');
+      when = st.days === 1 ? 'i morgon, ' + DAYS[st.occ.getDay()] : dateLabel(st.occ, t);
+      if (ev.showAge) extra = `Fyller ${ageAt(ev, st.occ)} år`;
+    } else {
+      num = fmt(st.days); unit = pl(st.days, 'dag sidan', 'dagar sidan');
+      when = !st.ended && st.days >= 31 ? ymdShort(ymdDiff(st.start, t)) : dateLabel(st.start, t);
+      if (!st.ended && st.days > 0 && dayNum(firstOcc({ date: ymd(st.start), repeat: { unit: 'year', every: 1 } }, t)) === dayNum(t)) extra = `${t.getFullYear() - st.start.getFullYear()} år i dag`;
+    }
+    return { num, unit, when, extra };
+  }
+
+  function pageHTML(ev, st, now, big) {
+    const c = cardData(ev, st, now);
+    const src = photoSrc(ev.photo);
+    const soon = st.phase === 'today' || (st.phase === 'down' && st.days <= 7);
+    const cls = ['page', big && 'big', src && 'has-photo', soon && 'soon', st.ended && 'ended'].filter(Boolean).join(' ');
+    const L = Math.min(6, Math.max(1, c.num.length));
+    return `<button type="button" class="${cls}" data-open="${esc(ev.id)}" style="--band:var(--c-${ev.color})" aria-label="${esc(`${ev.title}: ${c.num} ${c.unit}, ${c.when}${c.extra ? ', ' + c.extra : ''}`)}">`
+      + `<span class="band">${src ? `<img src="${esc(src)}" alt="" loading="lazy">` : ''}<span class="band-title">${esc(ev.title)}</span></span>`
+      + `<span class="perf" aria-hidden="true"></span>`
+      + `<span class="body" aria-hidden="true"><span class="num l${L}">${esc(c.num)}</span><span class="unit">${esc(c.unit)}</span><span class="when">${esc(c.when)}</span>${c.extra ? `<span class="extra">${esc(c.extra)}</span>` : ''}</span>`
+      + `</button>`;
+  }
+
+  function groupHTML(title, rows, now) {
+    return `<section class="group"><div class="group-head"><h2>${title}</h2><span class="count">${rows.length}</span></div>`
+      + `<div class="grid">${rows.map(r => pageHTML(r.ev, r.st, now, false)).join('')}</div></section>`;
+  }
+
+  function tplEvent(t, today) {
+    if (t.rule) {
+      return { title: t.title, kind: 'down', date: ymd(firstOcc({ rule: t.rule }, today)), time: '', repeat: { unit: 'year', every: 1 }, rule: t.rule, color: t.color, template: t.key };
+    }
+    let d = new Date(today.getFullYear(), t.m, t.d);
+    if (d < today) d = new Date(today.getFullYear() + 1, t.m, t.d);
+    return { title: t.title, kind: 'down', date: ymd(d), time: '', repeat: { unit: 'year', every: 1 }, rule: null, color: t.color, template: t.key };
+  }
+
+  function suggHTML(now) {
+    const today = dateOnly(now);
+    const used = new Set(S.events.map(e => e.template).filter(Boolean));
+    const tiles = TEMPLATES.filter(t => !used.has(t.key))
+      .map(t => ({ t, st: status(tplEvent(t, today), now) }))
+      .sort((a, b) => a.st.days - b.st.days)
+      .map(({ t, st }) => `<button type="button" class="sugg" data-tpl="${t.key}" style="--band:var(--c-${t.color})">`
+        + `<span class="mini" aria-hidden="true"><span class="mini-m">${MON_S[st.occ.getMonth()]}</span><span class="mini-d">${st.occ.getDate()}</span></span>`
+        + `<span class="sugg-txt"><span class="sugg-t">${esc(t.title)}</span><span class="sugg-s">${inText(st.days)}, kvart år</span></span></button>`);
+    const starters = [
+      ['bursdag', 'Bursdag', 'Tel ned kvart år og vis alderen', ICON.cake],
+      ['sidan', 'Dagar sidan', 'Til dømes då hunden kom i hus', ICON.paw],
+    ].map(([k, title, sub, icon]) => `<button type="button" class="sugg starter" data-start="${k}">`
+      + `<span class="mini" aria-hidden="true"><span class="mini-m"></span><span class="mini-d">${icon}</span></span>`
+      + `<span class="sugg-txt"><span class="sugg-t">${title}</span><span class="sugg-s">${sub}</span></span></button>`);
+    return `<section class="group"><div class="group-head"><h2>Legg til fleire</h2></div>`
+      + `<p class="lede">Trykk på eit forslag for å fylle ut skjemaet. Du kan endre namn, dato, farge og bilete før du lagrar.</p>`
+      + `<div class="sugg-grid">${starters.concat(tiles).join('')}</div></section>`;
+  }
+
+  function render() {
+    const now = new Date(), today = dateOnly(now);
+    $('#todayM').textContent = MON_S[today.getMonth()];
+    $('#todayD').textContent = today.getDate();
+    $('#todayText').textContent = `${cap(DAYS[today.getDay()])} ${today.getDate()}. ${MONTHS[today.getMonth()]}, veke ${isoWeek(today)}`;
+    const add = $('#addBtn');
+    add.hidden = !S.canWrite || S.loading;
+    if (!add.innerHTML) add.innerHTML = ICON.plus + '<span>Ny</span>';
+
+    const rows = S.events.map(ev => ({ ev, st: status(ev, now) }));
+    const downs = rows.filter(r => r.st.phase !== 'since').sort((a, b) => a.st.days - b.st.days || a.ev.title.localeCompare(b.ev.title, 'nb'));
+    const ups = rows.filter(r => r.st.phase === 'since').sort((a, b) => (a.st.ended ? 1 : 0) - (b.st.ended ? 1 : 0) || (a.st.ended ? a.st.days - b.st.days : b.st.days - a.st.days));
+    const hero = downs[0] || ups.find(r => !r.st.ended) || null;
+
+    let html = '';
+    if (S.loading) {
+      html += `<section><div class="blank"><span class="band"></span><span class="perf" aria-hidden="true"></span><div class="blank-in"><h2>Hentar nedteljingane dine</h2><p>Det tek berre eit augeblikk.</p></div></div></section>`;
+    } else if (!hero) {
+      html += `<section><div class="blank"><span class="band"></span><span class="perf" aria-hidden="true"></span><div class="blank-in">`
+        + `<h2>Ingen nedteljingar enno</h2><p>Legg til ein bursdag, jula eller dagen hunden kom i hus. Forslaga under er ein grei stad å byrje.</p>`
+        + (S.canWrite ? `<button type="button" class="btn btn-primary" data-new>${ICON.plus}<span>Ny nedteljing</span></button>` : '')
+        + `</div></div></section>`;
+    } else {
+      html += `<section aria-label="Neste"><p class="label">${hero.st.phase === 'since' ? 'Tel opp' : 'Neste'}</p>${pageHTML(hero.ev, hero.st, now, true)}</section>`;
+    }
+    const laterDown = downs.filter(r => r !== hero);
+    if (laterDown.length) html += groupHTML('Seinare', laterDown, now);
+    const restUp = ups.filter(r => r !== hero);
+    if (restUp.length) html += groupHTML('Tel opp', restUp, now);
+    if (S.canWrite && !S.loading) html += suggHTML(now);
+
+    if (html !== lastMain) { main.innerHTML = html; lastMain = html; }
+
+    $('#foot').textContent = S.loading ? ''
+      : !S.canWrite ? 'Du kan sjå denne kalenderen, men ikkje endre han.'
+      : S.mode === 'db' ? 'Nedteljingane er lagra på claude.ai, så du ser dei same på telefonen og PC-en.'
+      : S.memoryOnly ? 'Denne nettlesaren lagrar ikkje data her, så nedteljingane forsvinn når du lukkar sida.'
+      : 'Nedteljingane er lagra på denne eininga.';
+  }
+
+  // ---------- Ark ----------
+  function showLayer(html, kind) {
+    if (layer.hidden) S.lastFocus = document.activeElement;
+    layer.innerHTML = `<div class="sheet ${kind}" role="dialog" aria-modal="true" aria-labelledby="sheetTitle" tabindex="-1">${html}</div>`;
+    layer.hidden = false;
+    document.documentElement.classList.add('locked');
+    const sheet = layer.firstElementChild;
+    sheet.focus({ preventScroll: true });
+    return sheet;
+  }
+  function closeLayer() {
+    stopTick();
+    if (F && F.preview) URL.revokeObjectURL(F.preview);
+    F = null;
+    S.detailId = null;
+    layer.hidden = true;
+    layer.innerHTML = '';
+    document.documentElement.classList.remove('locked');
+    if (S.lastFocus && S.lastFocus.isConnected) S.lastFocus.focus({ preventScroll: true });
+  }
+
+  function tickValues(ev, st, now) {
+    let ms = st.phase === 'since' ? now - withTime(st.start, ev.time) : withTime(st.occ, ev.time) - now;
+    const s = Math.floor(Math.max(0, ms) / 1000);
+    return { ms, v: [Math.floor(s / 86400), Math.floor((s % 86400) / 3600), Math.floor((s % 3600) / 60), s % 60] };
+  }
+  const TICK_NAMES = [['dag', 'dagar'], ['time', 'timar'], ['minutt', 'minutt'], ['sekund', 'sekund']];
+
+  function detailInner(ev, now) {
+    const st = status(ev, now), c = cardData(ev, st, now), t = st.today, src = photoSrc(ev.photo);
+    const facts = [];
+    const timeTxt = ev.time ? ` kl. ${ev.time}` : '';
+    if (st.phase === 'since') {
+      facts.push([st.ended ? 'Datoen var' : 'Starta', cap(dateLabel(st.start, t, true)) + timeTxt]);
+      if (st.days > 0) facts.push(['Tid sidan', ymdLong(ymdDiff(st.start, t))]);
+      if (st.days >= 14) {
+        const w = Math.floor(st.days / 7), r = st.days % 7;
+        facts.push(['I veker', `${fmt(w)} ${pl(w, 'veke', 'veker')}${r ? ` og ${r} ${pl(r, 'dag', 'dagar')}` : ''}`]);
+      }
+      if (!st.ended) {
+        const ms = nextMilestone(st.days);
+        facts.push(['Neste milepæl', `${fmt(ms)} dagar, ${dateLabel(addDays(st.start, ms), t)} (${inText(ms - st.days)})`]);
+        let ann = firstOcc({ date: ymd(st.start), repeat: { unit: 'year', every: 1 } }, t);
+        if (dayNum(ann) === dayNum(st.start)) ann = addMonths(st.start, 12);
+        const n = ann.getFullYear() - st.start.getFullYear(), aD = dayNum(ann) - dayNum(t);
+        facts.push([aD === 0 ? 'Årsdag i dag' : 'Neste årsdag', `${n} år, ${dateLabel(ann, t)}${aD ? ` (${inText(aD)})` : ''}`]);
+      }
+    } else {
+      facts.push(['Dato', cap(dateLabel(st.occ, t, true)) + timeTxt]);
+      if (repeats(ev)) {
+        facts.push(['Gjentek seg', repeatText(ev)]);
+        const after = firstOcc(ev, addDays(st.occ, 1));
+        if (after) facts.push(['Gongen etter', cap(dateLabel(after, t, true))]);
+      }
+      if (ev.showAge) facts.push([st.phase === 'today' ? 'Fyller i dag' : 'Fyller', `${ageAt(ev, st.occ)} år`]);
+    }
+    const tv = tickValues(ev, st, now);
+    const showTick = !(st.phase === 'today' && tv.ms <= 0);
+    const L = Math.min(6, Math.max(1, c.num.length));
+    const soon = st.phase === 'today' || (st.phase === 'down' && st.days <= 7);
+    const unitLine = st.phase === 'today' ? 'er dagen' : `${c.unit} ${st.phase === 'since' ? '' : esc(ev.title)}`.trim();
+    return `<button type="button" class="x" data-close aria-label="Lukk">${ICON.x}</button>`
+      + `<div class="d-media${src ? ' has-photo' : ''}" style="--band:var(--c-${ev.color})">${src ? `<img src="${esc(src)}" alt="">` : ''}<h2 class="d-title" id="sheetTitle">${esc(ev.title)}</h2></div>`
+      + `<div class="d-count${soon ? ' soon' : ''}${st.ended ? ' ended' : ''}"><span class="num l${L}">${esc(c.num)}</span><span class="unit">${unitLine}</span>${c.extra ? `<span class="extra">${esc(c.extra)}</span>` : ''}</div>`
+      + (showTick
+        ? `<div class="tick" aria-hidden="true">${tv.v.map((x, i) => `<div><b data-t="${i}">${fmt(x)}</b><span data-tl="${i}">${TICK_NAMES[i][x === 1 ? 0 : 1]}</span></div>`).join('')}</div>`
+        : `<p class="today-msg">I dag er dagen. Kos deg!</p>`)
+      + `<dl class="facts">${facts.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('')}</dl>`
+      + (S.canWrite ? `<div class="actions"><button type="button" class="btn" data-edit="${esc(ev.id)}">${ICON.edit}<span>Endre</span></button><button type="button" class="btn btn-danger" data-del="${esc(ev.id)}">${ICON.trash}<span>Slett</span></button></div>` : '<div style="height:16px"></div>');
+  }
+  const detailSig = (ev, now) => { const st = status(ev, now); return st.phase + st.days + JSON.stringify(ev); };
+
+  function openDetail(id) {
+    const ev = S.events.find(e => e.id === id);
+    if (!ev) return;
+    const now = new Date();
+    const sheet = showLayer(detailInner(ev, now), 'detail');
+    sheet.dataset.sig = detailSig(ev, now);
+    S.detailId = id;
+    startTick();
+    const st = status(ev, now);
+    if (st.phase === 'today' || (st.phase === 'since' && !st.ended && /år i dag/.test(cardData(ev, st, now).extra))) confetti($('.d-media', sheet));
+  }
+  function refreshDetail() {
+    const sheet = $('.sheet.detail', layer);
+    if (!sheet) return;
+    const ev = S.events.find(e => e.id === S.detailId);
+    if (!ev) { closeLayer(); return; }
+    const now = new Date();
+    const sig = detailSig(ev, now);
+    if (sheet.dataset.sig === sig) return;
+    const top = sheet.scrollTop;
+    sheet.innerHTML = detailInner(ev, now);
+    sheet.dataset.sig = sig;
+    sheet.scrollTop = top;
+  }
+  let tickTimer = 0;
+  function startTick() { stopTick(); tickTimer = setInterval(updateTick, 1000); }
+  function stopTick() { clearInterval(tickTimer); tickTimer = 0; }
+  function updateTick() {
+    const sheet = $('.sheet.detail', layer);
+    const ev = S.events.find(e => e.id === S.detailId);
+    if (!sheet || !ev) return;
+    const now = new Date();
+    if (sheet.dataset.sig !== detailSig(ev, now)) { refreshDetail(); return; }
+    const { v } = tickValues(ev, status(ev, now), now);
+    v.forEach((x, i) => {
+      const b = $(`[data-t="${i}"]`, sheet), l = $(`[data-tl="${i}"]`, sheet);
+      if (b && b.textContent !== fmt(x)) b.textContent = fmt(x);
+      if (l) l.textContent = TICK_NAMES[i][x === 1 ? 0 : 1];
+    });
+  }
+
+  function confetti(host) {
+    if (reduceMotion || !host) return;
+    const cv = document.createElement('canvas');
+    cv.className = 'confetti';
+    host.appendChild(cv);
+    const r = host.getBoundingClientRect(), dpr = Math.min(2, window.devicePixelRatio || 1);
+    cv.width = r.width * dpr; cv.height = r.height * dpr;
+    const ctx = cv.getContext('2d');
+    ctx.scale(dpr, dpr);
+    const css = getComputedStyle(document.documentElement);
+    const cols = ['--c-rogn', '--c-raud', '--c-gran', '--c-fjord', '--c-lyng'].map(v => css.getPropertyValue(v).trim()).concat(['#FFD23F', '#FFFFFF']);
+    const P = Array.from({ length: 110 }, () => ({
+      x: r.width / 2 + (Math.random() - 0.5) * 80, y: r.height * 0.55,
+      vx: (Math.random() - 0.5) * 11, vy: -Math.random() * 10 - 4,
+      w: 5 + Math.random() * 6, h: 3 + Math.random() * 4, a: Math.random() * 6, va: (Math.random() - 0.5) * 0.35,
+      c: cols[(Math.random() * cols.length) | 0],
+    }));
+    const t0 = performance.now();
+    (function frame(t) {
+      const k = (t - t0) / 1000;
+      ctx.clearRect(0, 0, r.width, r.height);
+      ctx.globalAlpha = Math.max(0, 1 - k / 2.8);
+      for (const p of P) {
+        p.vy += 0.3; p.vx *= 0.99; p.x += p.vx; p.y += p.vy; p.a += p.va;
+        ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.a); ctx.fillStyle = p.c; ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h); ctx.restore();
+      }
+      if (k < 2.8 && cv.isConnected) requestAnimationFrame(frame); else cv.remove();
+    })(t0);
+  }
+
+  // ---------- Skjema ----------
+  function openForm(init = {}) {
+    const today = dateOnly(new Date());
+    F = {
+      id: init.id || null,
+      kind: init.kind === 'up' ? 'up' : 'down',
+      title: init.title || '',
+      placeholder: init.placeholder || (init.kind === 'up' ? 'Til dømes «Hunden kom i hus»' : 'Til dømes «Bursdag til Emma»'),
+      date: init.date || (init.rule ? ymd(firstOcc({ rule: init.rule }, today)) : ''),
+      time: init.time || '',
+      unit: init.rule ? 'year' : (init.repeat && UNIT_NAMES[init.repeat.unit] ? init.repeat.unit : 'none'),
+      every: (init.repeat && init.repeat.every) || 1,
+      showAge: !!init.showAge,
+      rule: init.rule || null,
+      color: COLORS.includes(init.color) ? init.color : 'rogn',
+      template: init.template || null,
+      photo: init.photo || null,
+      created: init.created || Date.now(),
+      file: null, preview: null, removePhoto: false, busy: false,
+    };
+    showLayer(formHTML(), 'form');
+    syncForm();
+    if (!F.id) setTimeout(() => { const t = $('#fTitle', layer); if (t && !matchMedia('(pointer: coarse)').matches) t.focus(); }, 60);
+  }
+
+  function formHTML() {
+    const editing = !!F.id;
+    return `<form class="form" id="evForm" novalidate>`
+      + `<div class="form-head"><h2 id="sheetTitle">${editing ? 'Endre nedteljing' : 'Ny nedteljing'}</h2><button type="button" class="x plain" data-close aria-label="Lukk">${ICON.x}</button></div>`
+      + `<div class="seg" role="group" aria-label="Kva skal teljast"><button type="button" data-kind="down">Tel ned til ein dag</button><button type="button" data-kind="up">Tel dagar sidan</button></div>`
+      + `<label class="field"><span>Namn</span><input class="input" id="fTitle" maxlength="60" autocomplete="off" value="${esc(F.title)}" placeholder="${esc(F.placeholder)}"></label>`
+      + `<div class="row2" id="dateRow"><label class="field"><span id="fDateLabel">Dato</span><input class="input" id="fDate" type="date" value="${esc(F.date)}"></label>`
+      + `<label class="field"><span>Klokka <em>(valfritt)</em></span><input class="input" id="fTime" type="time" value="${esc(F.time)}"></label></div>`
+      + `<p class="hint" id="ageHint">Skriv inn fødselsdatoen med rett årstal, så reknar appen ut alderen.</p>`
+      + `<div class="rule-note" id="ruleNote"><span id="ruleText"></span><button type="button" class="linkbtn" id="ruleClear">Bruk ein fast dato i staden</button></div>`
+      + `<fieldset class="field" id="repeatSet"><legend>Gjenta nedteljinga</legend>`
+      + `<div class="seg" role="group" aria-label="Gjenta">${[['none', 'Aldri'], ['week', 'Veke'], ['month', 'Månad'], ['year', 'År']].map(([v, l]) => `<button type="button" data-unit="${v}">${l}</button>`).join('')}</div>`
+      + `<div id="everyRow"><div class="every"><span>Kvar</span><input class="input" id="fEvery" type="number" inputmode="numeric" min="1" max="99" value="${F.every}" aria-label="Kor ofte"><span id="everyUnit"></span></div><p class="hint" id="everyHint"></p></div>`
+      + `<label class="check" id="ageRow"><input type="checkbox" id="fAge"${F.showAge ? ' checked' : ''}><span>Vis alder, til dømes «fyller 10 år»</span></label>`
+      + `</fieldset>`
+      + `<fieldset class="field"><legend>Farge</legend><div class="swatches">${COLORS.map(c => `<label class="sw" style="--band:var(--c-${c})"><input type="radio" name="fColor" value="${c}"${F.color === c ? ' checked' : ''} aria-label="${COLOR_NAMES[c]}"><span></span></label>`).join('')}</div></fieldset>`
+      + `<div class="field"><span>Bilete <em>(valfritt)</em></span><div class="photo-pick" id="photoPick">${photoPickHTML()}</div></div>`
+      + `<p class="form-err" id="formErr" role="alert"></p>`
+      + `<div class="form-foot"><button type="button" class="btn" data-close>Avbryt</button><button type="submit" class="btn btn-primary" id="saveBtn">${editing ? 'Lagre endringane' : 'Legg til'}</button></div>`
+      + `</form>`;
+  }
+  function photoPickHTML() {
+    const src = F.preview || (!F.removePhoto && photoSrc(F.photo));
+    const pick = label => `<label class="btn"><input type="file" accept="image/*" id="fPhoto" class="sr">${ICON.image}<span>${label}</span></label>`;
+    return src ? `<img class="thumb" src="${esc(src)}" alt="Valt bilete">${pick('Byt bilete')}<button type="button" class="btn" id="photoRemove">Fjern</button>` : pick('Vel bilete');
+  }
+  function syncForm() {
+    if (!F) return;
+    const today = dateOnly(new Date());
+    $$('[data-kind]', layer).forEach(b => b.setAttribute('aria-pressed', String(b.dataset.kind === F.kind)));
+    $$('[data-unit]', layer).forEach(b => b.setAttribute('aria-pressed', String(b.dataset.unit === F.unit)));
+    const ruleOn = !!F.rule && F.kind === 'down';
+    $('#ruleNote', layer).hidden = !ruleOn;
+    $('#dateRow', layer).hidden = ruleOn;
+    if (ruleOn) $('#ruleText', layer).textContent = `Datoen følgjer regelen «${ruleText(F.rule)}». Neste gong er ${dateLabel(firstOcc({ rule: F.rule }, today), today, true)}.`;
+    $('#repeatSet', layer).hidden = F.kind !== 'down' || ruleOn;
+    $('#everyRow', layer).hidden = F.unit === 'none';
+    $('#everyUnit', layer).textContent = '. ' + (UNIT_NAMES[F.unit] || '');
+    const n = Math.max(1, F.every | 0 || 1);
+    $('#everyHint', layer).textContent = n === 1 ? `Skriv 2 for annakvar ${UNIT_NAMES[F.unit] || ''}.` : `Teljinga startar på nytt kvar ${n}. ${UNIT_NAMES[F.unit] || ''}.`;
+    $('#ageRow', layer).hidden = F.unit !== 'year';
+    $('#ageHint', layer).hidden = !(F.kind === 'down' && F.unit === 'year' && F.showAge && !ruleOn);
+    $('#fDateLabel', layer).textContent = F.kind === 'up' ? 'Frå dato' : 'Dato';
+  }
+  function formErr(msg, focusSel) {
+    const el = $('#formErr', layer);
+    if (el) el.textContent = msg;
+    if (focusSel) { const f = $(focusSel, layer); if (f) f.focus(); }
+  }
+  async function submitForm() {
+    if (!F || F.busy) return;
+    const title = F.title.trim();
+    const ruleOn = !!F.rule && F.kind === 'down';
+    if (!title) return formErr('Skriv eit namn, til dømes «Bursdag til Emma».', '#fTitle');
+    if (!ruleOn && !parseYmd(F.date)) return formErr('Vel ein dato.', '#fDate');
+    const btn = $('#saveBtn', layer);
+    F.busy = true; btn.disabled = true; btn.textContent = 'Lagrar …'; formErr('');
+    const form = F;
+    try {
+      let photo = form.removePhoto ? null : form.photo;
+      if (form.file) photo = await persistPhoto(form.file);
+      const today = dateOnly(new Date());
+      const doc = {
+        title,
+        kind: form.kind,
+        date: ruleOn ? ymd(firstOcc({ rule: form.rule }, today)) : form.date,
+        time: form.time || '',
+        repeat: form.kind === 'down' ? { unit: ruleOn ? 'year' : form.unit, every: ruleOn ? 1 : Math.min(99, Math.max(1, form.every | 0 || 1)) } : { unit: 'none', every: 1 },
+        rule: ruleOn ? form.rule : null,
+        color: form.color,
+        photo: photo || null,
+        showAge: form.kind === 'down' && !ruleOn && form.unit === 'year' && form.showAge,
+        template: form.template,
+        created: form.created,
+        updated: Date.now(),
+      };
+      const id = form.id || 'e' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+      const old = form.id ? S.events.find(e => e.id === form.id) : null;
+      await Store.put(id, doc);
+      if (old && old.photo && old.photo.asset && (!photo || photo.asset !== old.photo.asset)) dropAsset(old.photo.asset);
+      if (F !== form) return;
+      closeLayer();
+      toast(form.id ? 'Endringane er lagra' : 'Lagt til');
+    } catch (e) {
+      if (e && e.code === 'invalid_argument' && S.mode === 'db') { S.canWrite = false; render(); }
+      if (F !== form) return;
+      form.busy = false; btn.disabled = false; btn.textContent = form.id ? 'Lagre endringane' : 'Legg til';
+      formErr(errText(e));
+    }
+  }
+
+  let delTimer = 0;
+  async function deleteClick(btn, id) {
+    if (!btn.classList.contains('armed')) {
+      btn.classList.add('armed');
+      btn.lastElementChild.textContent = 'Trykk igjen for å slette';
+      clearTimeout(delTimer);
+      delTimer = setTimeout(() => { if (btn.isConnected) { btn.classList.remove('armed'); btn.lastElementChild.textContent = 'Slett'; } }, 3500);
+      return;
+    }
+    clearTimeout(delTimer);
+    const ev = S.events.find(e => e.id === id);
+    btn.disabled = true;
+    try {
+      await Store.del(id);
+      if (ev && ev.photo && ev.photo.asset) dropAsset(ev.photo.asset);
+      closeLayer();
+      toast('Sletta');
+    } catch (e) {
+      btn.disabled = false;
+      toast(errText(e));
+    }
+  }
+
+  let toastTimer = 0;
+  function toast(msg) {
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toastEl.classList.remove('show'), 2600);
+  }
+
+  // ---------- Hendingar ----------
+  main.addEventListener('click', e => {
+    const el = e.target.closest('[data-open],[data-tpl],[data-start],[data-new]');
+    if (!el) return;
+    const today = dateOnly(new Date());
+    if (el.dataset.open) openDetail(el.dataset.open);
+    else if (el.dataset.tpl) { const t = TEMPLATES.find(x => x.key === el.dataset.tpl); if (t) openForm(tplEvent(t, today)); }
+    else if (el.dataset.start === 'bursdag') openForm({ kind: 'down', repeat: { unit: 'year', every: 1 }, showAge: true, color: 'lyng', placeholder: 'Til dømes «Bursdag til Emma»' });
+    else if (el.dataset.start === 'sidan') openForm({ kind: 'up', color: 'gran', date: ymd(today), placeholder: 'Til dømes «Hunden kom i hus»' });
+    else if ('new' in el.dataset) openForm();
+  });
+  $('#addBtn').addEventListener('click', () => openForm());
+
+  layer.addEventListener('click', e => {
+    if (e.target === layer) { closeLayer(); return; }
+    const el = e.target.closest('[data-close],[data-edit],[data-del],[data-kind],[data-unit],#ruleClear,#photoRemove');
+    if (!el) return;
+    if ('close' in el.dataset) closeLayer();
+    else if (el.dataset.edit) { const ev = S.events.find(x => x.id === el.dataset.edit); stopTick(); S.detailId = null; if (ev) openForm(ev); }
+    else if (el.dataset.del) deleteClick(el, el.dataset.del);
+    else if (F && el.dataset.kind) {
+      F.kind = el.dataset.kind;
+      if (F.kind === 'up' && !parseYmd(F.date)) { F.date = ymd(dateOnly(new Date())); $('#fDate', layer).value = F.date; }
+      syncForm();
+    }
+    else if (F && el.dataset.unit) { F.unit = el.dataset.unit; syncForm(); }
+    else if (F && el.id === 'ruleClear') { F.date = ymd(firstOcc({ rule: F.rule }, dateOnly(new Date()))); F.rule = null; F.unit = 'year'; $('#fDate', layer).value = F.date; syncForm(); }
+    else if (F && el.id === 'photoRemove') {
+      if (F.preview) URL.revokeObjectURL(F.preview);
+      F.file = null; F.preview = null; F.removePhoto = true;
+      $('#photoPick', layer).innerHTML = photoPickHTML();
+    }
+  });
+  layer.addEventListener('input', e => {
+    if (!F) return;
+    const id = e.target.id;
+    if (id === 'fTitle') F.title = e.target.value;
+    else if (id === 'fDate') F.date = e.target.value;
+    else if (id === 'fTime') F.time = e.target.value;
+    else if (id === 'fEvery') { F.every = parseInt(e.target.value, 10) || 1; syncForm(); }
+  });
+  layer.addEventListener('change', e => {
+    if (!F) return;
+    const t = e.target;
+    if (t.id === 'fDate') F.date = t.value;
+    else if (t.id === 'fTime') F.time = t.value;
+    else if (t.id === 'fAge') { F.showAge = t.checked; syncForm(); }
+    else if (t.name === 'fColor') F.color = t.value;
+    else if (t.id === 'fPhoto' && t.files && t.files[0]) {
+      const file = t.files[0];
+      if (!/^image\//.test(file.type) && !/\.(heic|heif|jpe?g|png|webp|gif)$/i.test(file.name)) { formErr('Vel ei biletfil, til dømes JPG, PNG eller HEIC.'); return; }
+      if (F.preview) URL.revokeObjectURL(F.preview);
+      F.file = file; F.preview = URL.createObjectURL(file); F.removePhoto = false;
+      $('#photoPick', layer).innerHTML = photoPickHTML();
+      formErr('');
+    }
+  });
+  layer.addEventListener('submit', e => { e.preventDefault(); submitForm(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && !layer.hidden) closeLayer(); });
+  document.addEventListener('error', e => {
+    const img = e.target;
+    if (!(img instanceof HTMLImageElement)) return;
+    const holder = img.closest('.has-photo');
+    if (holder) holder.classList.remove('has-photo');
+    if (!img.classList.contains('thumb')) img.remove();
+  }, true);
+
+  let lastKey = '';
+  setInterval(() => {
+    const now = new Date();
+    const key = ymd(now) + (S.events.some(e => e.time) ? `${now.getHours()}:${now.getMinutes()}` : '');
+    if (key !== lastKey) { lastKey = key; render(); }
+  }, 15000);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) { render(); refreshDetail(); } });
+
+  // ---------- Oppstart ----------
+  function useLocal() {
+    S.mode = 'local'; S.loading = false; S.canWrite = true;
+    S.events = readLocal();
+    render();
+  }
+  async function init() {
+    render();
+    const c = window.claude;
+    if (!c || typeof c.use !== 'function') { useLocal(); return; }
+    let db = null, user = null, assets = null;
+    try { [db, user, assets] = await Promise.all([c.use('db'), c.use('user'), c.use('assets')]); } catch { /* fell tilbake til lokal lagring */ }
+    if (!db) { useLocal(); return; }
+    S.mode = 'db';
+    S.col = db.collection('events');
+    S.assets = assets;
+    if (user) {
+      try { const w = await user.can('data.write'); S.canWrite = w !== false; } catch { /* behald skrivetilgang og la lagringa avgjere */ }
+    }
+    S.col.onSnapshot(snap => {
+      if (snap.metadata.fromCache && snap.empty) return;
+      S.events = snap.docs.map(d => clean({ id: d.id, ...d.data() })).filter(Boolean);
+      S.loading = false;
+      render();
+      if (S.detailId) refreshDetail();
+    }, () => {
+      S.loading = false;
+      render();
+      toast('Mista kontakten med lagringa. Last sida på nytt.');
+    });
+    setTimeout(() => { if (S.loading) { S.loading = false; render(); } }, 8000);
+  }
+  init();
+})();
+</script>
