@@ -18,6 +18,10 @@ Utan konto blir nedteljingane lagra berre på eininga du brukar. Trykk på perso
 
 Dra ned øvst på sida på telefonen, eller trykk på pil-knappen øvst på PC-en. Då hentar appen det som er lagt inn på andre einingar, og om det finst ein ny versjon av appen, blir han lasta med ein gong. Når du opnar appen att frå bakgrunnen, hentar han ny versjon av seg sjølv.
 
+## Widget på iPhone
+
+Logg inn, trykk på person-knappen og vel «Kopier widget-koden». Lim koden inn i den gratis appen [Scriptable](https://apps.apple.com/app/scriptable/id1405459188), og legg til ein Scriptable-widget på startskjermen eller låseskjermen. Skriv eit namn, til dømes Halloween, i «Parameter» for å vise éi bestemt nedteljing. Koden kan berre lese nedteljingane, og «Slå av widget-lenkjene» stoppar alle widgetane.
+
 ## Bilete
 
 Kvar nedteljing kan ha ein ferdig illustrasjon (kake, gåve, ballongar, juletre, graskar, fyrverkeri, flagg, påskeegg, sankthansbål, hjarte, pote, sol og strand) eller eit eige bilete. Appen vel ein illustrasjon av seg sjølv ut frå namnet, til dømes kake for «Bursdag til Emma».
@@ -26,5 +30,6 @@ Kvar nedteljing kan ha ein ferdig illustrasjon (kake, gåve, ballongar, juletre,
 
 - `dagteljar.html`: kjelda til appen (same fil blir publisert på claude.ai).
 - `bygg.sh`: lagar `index.html` og `versjon.txt` frå kjelda. Køyr han etter kvar endring. Auk `CACHE` i `sw.js` når du endrar `sw.js` eller filene i `SHELL`.
+- `scriptable.js`: widget-skriptet. Appen set inn ein lenkje-nøkkel som berre kan lese, før han kopierer det.
 - `manifest.webmanifest`, `sw.js`, `icons/`: det som gjer sida installerbar og brukande utan nett.
 - `worker/`: serveren for kontoar og synk (Cloudflare Worker med D1-database, `https://dagteljar.brannlogg-admin.workers.dev`). Passorda blir lagra som PBKDF2-hash. Legg ut endringar med `npx wrangler deploy` i `worker/`. Lokal test: `npx wrangler dev --port 8787` (appen på `localhost` brukar han automatisk) og `npx wrangler d1 execute dagteljar --local --file schema.sql` første gongen.
