@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Dagteljar">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="dagteljar-versjon" content="d6ef00dc97fc">
+<meta name="dagteljar-versjon" content="7664b2bc101e">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
@@ -1451,7 +1451,7 @@ input[type="date"].input,input[type="time"].input{-webkit-appearance:none;appear
           return r.text();
         }),
       ]);
-      return tpl.replace("'__NOKKEL__'", `'${nokkel}'`).replace("'__API__'", `'${API}'`);
+      return tpl.replace("'__NOKKEL__'", `'${nokkel}'`).replace("'__API__'", `'${API}'`).replace("'__KODE__'", `'${new URL('widget-kode.js', location.href)}'`);
     })();
     code.catch(() => {});
     btn.disabled = true;

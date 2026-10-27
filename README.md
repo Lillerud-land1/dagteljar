@@ -30,6 +30,6 @@ Kvar nedteljing kan ha ein ferdig illustrasjon (kake, gåve, ballongar, juletre,
 
 - `dagteljar.html`: kjelda til appen (same fil blir publisert på claude.ai).
 - `bygg.sh`: lagar `index.html` og `versjon.txt` frå kjelda. Køyr han etter kvar endring. Auk `CACHE` i `sw.js` når du endrar `sw.js` eller filene i `SHELL`.
-- `scriptable.js`: widget-skriptet. Appen set inn ein lenkje-nøkkel som berre kan lese, før han kopierer det.
+- `scriptable.js`: det korte skriptet som blir lima inn i Scriptable. Appen set inn ein lenkje-nøkkel som berre kan lese, før han kopierer det. Skriptet hentar `widget-kode.js` (sjølve widgeten) kvar gong, så endringar der når alle widgetar utan ny innliming.
 - `manifest.webmanifest`, `sw.js`, `icons/`: det som gjer sida installerbar og brukande utan nett.
 - `worker/`: serveren for kontoar og synk (Cloudflare Worker med D1-database, `https://dagteljar.brannlogg-admin.workers.dev`). Passorda blir lagra som PBKDF2-hash. Legg ut endringar med `npx wrangler deploy` i `worker/`. Lokal test: `npx wrangler dev --port 8787` (appen på `localhost` brukar han automatisk) og `npx wrangler d1 execute dagteljar --local --file schema.sql` første gongen.

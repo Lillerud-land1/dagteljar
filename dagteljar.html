@@ -1432,7 +1432,7 @@ input[type="date"].input,input[type="time"].input{-webkit-appearance:none;appear
           return r.text();
         }),
       ]);
-      return tpl.replace("'__NOKKEL__'", `'${nokkel}'`).replace("'__API__'", `'${API}'`);
+      return tpl.replace("'__NOKKEL__'", `'${nokkel}'`).replace("'__API__'", `'${API}'`).replace("'__KODE__'", `'${new URL('widget-kode.js', location.href)}'`);
     })();
     code.catch(() => {});
     btn.disabled = true;
