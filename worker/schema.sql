@@ -32,6 +32,13 @@ CREATE TABLE IF NOT EXISTS bilete (
 );
 CREATE INDEX IF NOT EXISTS bilete_namn ON bilete(namn);
 
+-- Gjenopprettingskode per konto, for å lage nytt passord når det gamle er gløymt. Berre hashen blir lagra.
+CREATE TABLE IF NOT EXISTS gjenoppretting (
+  namn  TEXT PRIMARY KEY,
+  hash  TEXT NOT NULL,
+  laga  INTEGER NOT NULL
+);
+
 -- Lenkjer som berre kan lese nedteljingane, til widgeten på startskjermen. Berre hashen blir lagra.
 CREATE TABLE IF NOT EXISTS widgetnoklar (
   hash  TEXT PRIMARY KEY,

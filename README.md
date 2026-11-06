@@ -12,7 +12,7 @@ Tel ned til bursdagar, jul og Halloween, og tel dagar sidan noko fint skjedde. N
 
 ## Konto og synk
 
-Utan konto blir nedteljingane lagra berre på eininga du brukar. Trykk på person-knappen øvst og lag ein konto med namn og passord, og logg inn med det same på PC-en og telefonen, så ser du dei same nedteljingane og bileta overalt. Nedteljingar som alt låg på eininga, blir flytta inn på kontoen. Det finst ingen «gløymt passord», så skriv passordet ned.
+Utan konto blir nedteljingane lagra berre på eininga du brukar. Trykk på person-knappen øvst og lag ein konto med namn og passord, og logg inn med det same på PC-en og telefonen, så ser du dei same nedteljingane og bileta overalt. Nedteljingar som alt låg på eininga, blir flytta inn på kontoen. Når du lagar kontoen, får du ein gjenopprettingskode. Med han kan du lage nytt passord under «Gløymt passord?» om du gløymer det. Er du innlogga på ei eining, kan du òg byte passord der under Konto.
 
 ## Oppdatere
 

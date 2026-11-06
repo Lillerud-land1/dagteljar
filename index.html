@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Dagteljar">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="dagteljar-versjon" content="7664b2bc101e">
+<meta name="dagteljar-versjon" content="b839a4db1546">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
@@ -213,11 +213,14 @@ html.ptr,html.ptr body{overscroll-behavior-y:none}
 .strip .btn{min-height:40px}
 .acct{display:flex;flex-direction:column;gap:16px;padding:18px 20px 0}
 .acct p{margin:0}
-.widget-box{display:flex;flex-direction:column;gap:10px;padding-top:16px;border-top:1px solid var(--line)}
-.widget-box h3{margin:0;font-size:18px;font-weight:700}
-.widget-box a{color:var(--focus);font-weight:600}
+.acct-sec{display:flex;flex-direction:column;gap:10px;padding-top:16px;border-top:1px solid var(--line)}
+.acct-sec h3{margin:0;font-size:18px;font-weight:700}
+.acct-sec a{color:var(--focus);font-weight:600}
+.pass-form{display:flex;flex-direction:column;gap:12px}
+.code-box{margin:0;padding:16px 12px;border-radius:12px;background:var(--field);font:700 clamp(19px,6.4vw,26px)/1.2 ui-monospace,Menlo,Consolas,monospace;letter-spacing:.06em;text-align:center;user-select:all;-webkit-user-select:all}
+.acct .linkbtn{align-self:flex-start;margin-top:-6px}
 .steps{display:flex;flex-direction:column;gap:6px;margin:0;padding-left:22px;font-size:15px}
-.widget-btns{display:flex;flex-wrap:wrap;gap:10px}
+.btn-row{display:flex;flex-wrap:wrap;gap:10px}
 .widget-code{min-height:140px;font:12px/1.4 ui-monospace,Menlo,Consolas,monospace;resize:vertical}
 .muted{color:var(--ink-2)}
 
@@ -787,8 +790,13 @@ input[type="date"].input,input[type="time"].input{-webkit-appearance:none;appear
     return moved;
   }
 
-  async function doAuth(kind, namn, passord) {
-    const d = await api(kind === 'ny' ? '/konto' : '/logg-inn', { method: 'POST', json: { namn, passord }, noAuth: true });
+  // kind: 'inn' (logg inn), 'ny' (lag konto) eller 'gloymt' (nytt passord med gjenopprettingskode).
+  async function doAuth(kind, body) {
+    const path = { ny: '/konto', inn: '/logg-inn', gloymt: '/nytt-passord' }[kind];
+    const d = await api(path, { method: 'POST', json: body, noAuth: true });
+    return { moved: await startSession(d), kode: d.kode || null };
+  }
+  async function startSession(d) {
     S.acc = { namn: d.namn, token: d.token };
     writeJson(ACC_KEY, S.acc);
     S.mode = 'cloud';
@@ -1399,14 +1407,25 @@ input[type="date"].input,input[type="time"].input{-webkit-appearance:none;appear
         + `<div class="form-head"><h2 id="sheetTitle">Kontoen din</h2><button type="button" class="x plain" data-close aria-label="Lukk">${ICON.x}</button></div>`
         + `<p>Du er logga inn som <b>${esc(S.acc.namn)}</b>. Logg inn med same namn og passord på PC-en og telefonen, så ser du dei same nedteljingane overalt.</p>`
         + `<p class="muted" id="syncInfo">${esc(syncText())}</p>`
-        + `<section class="widget-box" aria-labelledby="widgetH"><h3 id="widgetH">Widget på iPhone</h3>`
+        + `<section class="acct-sec" aria-labelledby="passH"><h3 id="passH">Passord</h3>`
+        + `<p class="muted">Med ein gjenopprettingskode kan du lage nytt passord om du gløymer det. Lag ein kode og skriv han ned.</p>`
+        + `<div class="btn-row"><button type="button" class="btn" data-pass>Byt passord</button><button type="button" class="btn" data-kode>Lag gjenopprettingskode</button></div>`
+        + `<form class="pass-form" id="passForm" novalidate hidden>`
+        + `<input type="text" autocomplete="username" value="${esc(S.acc.namn)}" hidden>`
+        + `<label class="field"><span>Nytt passord</span><input class="input" id="pNy" type="password" autocomplete="new-password" maxlength="200"></label>`
+        + `<label class="field"><span>Skriv det nye passordet ein gong til</span><input class="input" id="pNy2" type="password" autocomplete="new-password" maxlength="200"></label>`
+        + `<p class="hint">Du treng ikkje det gamle passordet. Andre einingar blir logga ut og må logge inn att med det nye.</p>`
+        + `<p class="form-err" id="passErr" role="alert"></p>`
+        + `<div class="btn-row"><button type="submit" class="btn btn-primary" id="passSubmit">Lagre nytt passord</button></div>`
+        + `</form></section>`
+        + `<section class="acct-sec" aria-labelledby="widgetH"><h3 id="widgetH">Widget på iPhone</h3>`
         + `<p class="muted">Med den gratis appen Scriptable kan du sjå nedteljingane på startskjermen og låseskjermen.</p>`
         + `<ol class="steps"><li>Last ned <a href="https://apps.apple.com/app/scriptable/id1405459188" target="_blank" rel="noopener">Scriptable frå App Store</a>.</li>`
         + `<li>Trykk på «Kopier widget-koden» under.</li>`
         + `<li>Opne Scriptable, trykk på + øvst, lim inn koden og kall skriptet Dagteljar.</li>`
         + `<li>Hald fingeren på startskjermen, trykk på Rediger og «Legg til widget», og vel Scriptable i ønskt storleik.</li>`
         + `<li>Hald fingeren på den nye widgeten, vel «Rediger widget» og vel Dagteljar under Script. Vil du ha éi bestemt nedteljing, skriv namnet i Parameter, til dømes Halloween.</li></ol>`
-        + `<div class="widget-btns"><button type="button" class="btn btn-primary" data-widget>Kopier widget-koden</button><button type="button" class="btn" data-widget-off>Slå av widget-lenkjene</button></div>`
+        + `<div class="btn-row"><button type="button" class="btn btn-primary" data-widget>Kopier widget-koden</button><button type="button" class="btn" data-widget-off>Slå av widget-lenkjene</button></div>`
         + `<p class="hint">Koden kan berre lese nedteljingane dine, ikkje endre dei. «Slå av widget-lenkjene» stoppar alle widgetane du har laga.</p>`
         + `<textarea class="input widget-code" id="widgetCode" readonly hidden aria-label="Widget-koden"></textarea>`
         + `</section>`
@@ -1420,19 +1439,62 @@ input[type="date"].input,input[type="time"].input{-webkit-appearance:none;appear
   function acctFormHTML() {
     const ny = A.tab === 'ny';
     const n = S.mode === 'local' ? S.events.length : 0;
+    if (A.tab === 'gloymt') {
+      return `<form class="acct" id="acctForm" novalidate>`
+        + `<div class="form-head"><h2 id="sheetTitle">Gløymt passord</h2><button type="button" class="x plain" data-close aria-label="Lukk">${ICON.x}</button></div>`
+        + `<p class="muted">Er du framleis innlogga på ein annan eining, til dømes PC-en, opnar du kontoen der med person-knappen og vel «Byt passord». Elles skriv du namnet og gjenopprettingskoden din her.</p>`
+        + `<label class="field"><span>Namn</span><input class="input" id="aNamn" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" maxlength="30" value="${esc(A.namn)}"></label>`
+        + `<label class="field"><span>Gjenopprettingskode</span><input class="input" id="aKode" autocomplete="off" autocapitalize="characters" autocorrect="off" spellcheck="false" maxlength="24" placeholder="ABCD-EFGH-JKMN-PQRS"></label>`
+        + `<label class="field"><span>Nytt passord</span><input class="input" id="aPass" type="password" autocomplete="new-password" maxlength="200"></label>`
+        + `<label class="field"><span>Skriv det nye passordet ein gong til</span><input class="input" id="aPass2" type="password" autocomplete="new-password" maxlength="200"></label>`
+        + `<p class="hint">Har du inga kode og er logga ut på alle einingane, går det ikkje an å få tilbake kontoen. Då må du lage ein ny konto.</p>`
+        + `<p class="form-err" id="acctErr" role="alert"></p>`
+        + `<div class="form-foot"><button type="button" class="btn" data-tab="inn">Tilbake</button><button type="submit" class="btn btn-primary" id="acctSubmit">Lag nytt passord</button></div>`
+        + `</form>`;
+    }
     return `<form class="acct" id="acctForm" novalidate>`
       + `<div class="form-head"><h2 id="sheetTitle">${ny ? 'Lag konto' : 'Logg inn'}</h2><button type="button" class="x plain" data-close aria-label="Lukk">${ICON.x}</button></div>`
       + `<p class="muted">Med ein konto ser du dei same nedteljingane på PC-en og telefonen. Bruk same namn og passord på alle einingane.</p>`
       + `<div class="seg" role="group" aria-label="Konto"><button type="button" data-tab="inn" aria-pressed="${!ny}">Eg har konto</button><button type="button" data-tab="ny" aria-pressed="${ny}">Lag ny konto</button></div>`
       + `<label class="field"><span>Namn</span><input class="input" id="aNamn" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" maxlength="30" value="${esc(A.namn)}" placeholder="Til dømes lillerud"></label>`
       + `<label class="field"><span>Passord</span><input class="input" id="aPass" type="password" autocomplete="${ny ? 'new-password' : 'current-password'}" maxlength="200"></label>`
+      + (ny ? '' : `<button type="button" class="linkbtn" data-tab="gloymt">Gløymt passord?</button>`)
       + (ny ? `<label class="field"><span>Skriv passordet ein gong til</span><input class="input" id="aPass2" type="password" autocomplete="new-password" maxlength="200"></label>`
-        + `<p class="hint">Namnet kan ha bokstavar, tal, punktum og bindestrek. Passordet må ha minst 6 teikn. Skriv det ned ein trygg stad, for det går ikkje an å få eit nytt om du gløymer det.</p>` : '')
+        + `<p class="hint">Namnet kan ha bokstavar, tal, punktum og bindestrek. Passordet må ha minst 6 teikn. Etterpå får du ein gjenopprettingskode som du kan bruke om du gløymer passordet.</p>` : '')
       + (n ? `<p class="hint">${n === 1 ? 'Nedteljinga' : `Dei ${n} nedteljingane`} på denne eininga blir flytta inn på kontoen.</p>` : '')
       + `<p class="form-err" id="acctErr" role="alert"></p>`
       + `<div class="form-foot"><button type="button" class="btn" data-close>Avbryt</button><button type="submit" class="btn btn-primary" id="acctSubmit">${ny ? 'Lag konto' : 'Logg inn'}</button></div>`
       + `</form>`;
   }
+  // Gjenopprettingskoden blir vist éin gong, rett etter at han er laga.
+  function showCode(kode, lead) {
+    A = null;
+    showLayer(`<div class="acct">`
+      + `<div class="form-head"><h2 id="sheetTitle">Gjenopprettingskoden din</h2><button type="button" class="x plain" data-close aria-label="Lukk">${ICON.x}</button></div>`
+      + (lead ? `<p>${esc(lead)}</p>` : '')
+      + `<p class="code-box" id="kodeTxt">${esc(kode)}</p>`
+      + `<p class="muted">Skriv koden ned eller ta eit skjermbilde, og gøym han ein trygg stad. Gløymer du passordet, trykkjer du på «Gløymt passord?» når du loggar inn, og brukar koden der. Han kan brukast éin gong, og lagar du ein ny kode, sluttar denne å verke.</p>`
+      + `<div class="form-foot"><button type="button" class="btn" data-copy-kode>Kopier koden</button><button type="button" class="btn btn-primary" data-close>Eg har skrive han ned</button></div>`
+      + `</div>`, 'acct');
+  }
+  async function newCode(btn) {
+    btn.disabled = true;
+    try { showCode((await api('/gjenopprettingskode', { method: 'POST' })).kode, ''); }
+    catch (e) { btn.disabled = false; toast(errText(e)); }
+  }
+  async function submitPass() {
+    const a = $('#pNy', layer).value, b = $('#pNy2', layer).value, btn = $('#passSubmit', layer);
+    const err = m => { $('#passErr', layer).textContent = m; };
+    if (a.length < 6) return err('Passordet må ha minst 6 teikn.');
+    if (a !== b) return err('Dei to passorda er ikkje like.');
+    btn.disabled = true; err('');
+    try {
+      await api('/passord', { method: 'POST', json: { passord: a } });
+      closeLayer();
+      toast('Passordet er bytt. På andre einingar må du logge inn att med det nye.');
+    } catch (e) { btn.disabled = false; err(errText(e)); }
+  }
+
   // Widget-koden: ny lenkje som berre kan lese, sett inn i skriptet og kopiert.
   // Safari vil ha kopieringa i same trykk, så teksten blir gitt som eit løfte til ClipboardItem.
   async function copyWidget(btn) {
@@ -1489,17 +1551,24 @@ input[type="date"].input,input[type="time"].input{-webkit-appearance:none;appear
 
   async function submitAcct() {
     if (!A || A.busy) return;
+    const kind = A.tab;
     const namn = $('#aNamn', layer).value.trim(), pass = $('#aPass', layer).value;
+    const kode = kind === 'gloymt' ? $('#aKode', layer).value.trim() : '';
     const err = m => { $('#acctErr', layer).textContent = m; };
     if (namn.length < 3) return err('Skriv eit namn på minst 3 teikn.');
+    if (kind === 'gloymt' && kode.replace(/[^a-z0-9]/gi, '').length !== 16) return err('Skriv inn heile gjenopprettingskoden, 16 bokstavar og tal.');
     if (pass.length < 6) return err('Passordet må ha minst 6 teikn.');
-    if (A.tab === 'ny' && pass !== $('#aPass2', layer).value) return err('Dei to passorda er ikkje like.');
+    if (kind !== 'inn' && pass !== $('#aPass2', layer).value) return err('Dei to passorda er ikkje like.');
     const btn = $('#acctSubmit', layer), label = btn.textContent, acct = A;
-    acct.busy = true; btn.disabled = true; btn.textContent = A.tab === 'ny' ? 'Lagar konto …' : 'Loggar inn …'; err('');
+    acct.busy = true; btn.disabled = true; btn.textContent = { ny: 'Lagar konto …', inn: 'Loggar inn …', gloymt: 'Lagar nytt passord …' }[kind]; err('');
     try {
-      const moved = await doAuth(A.tab, namn, pass);
-      if (A === acct) closeLayer();
-      toast(moved ? `Logga inn. ${moved} ${pl(moved, 'nedteljing', 'nedteljingar')} er flytta inn på kontoen.` : 'Logga inn');
+      const { moved, kode: nyKode } = await doAuth(kind, kind === 'gloymt' ? { namn, kode, passord: pass } : { namn, passord: pass });
+      if (A === acct) {
+        if (nyKode) showCode(nyKode, kind === 'ny' ? 'Kontoen er laga, og du er logga inn.' : 'Passordet er bytt, og du er logga inn. Den gamle koden verkar ikkje lenger, så her er ein ny.');
+        else closeLayer();
+      }
+      if (moved) toast(`${moved} ${pl(moved, 'nedteljing', 'nedteljingar')} er flytta inn på kontoen.`);
+      else if (!nyKode) toast('Logga inn');
     } catch (e) {
       if (A !== acct) return;
       acct.busy = false; btn.disabled = false; btn.textContent = label;
@@ -1525,11 +1594,16 @@ input[type="date"].input,input[type="time"].input{-webkit-appearance:none;appear
 
   layer.addEventListener('click', e => {
     if (e.target === layer) { closeLayer(); return; }
-    const el = e.target.closest('[data-close],[data-edit],[data-del],[data-kind],[data-unit],[data-place],[data-art],[data-tab],[data-logout],[data-sync],[data-widget],[data-widget-off],[data-new],[data-tpl],[data-start],[data-open],#ruleClear');
+    const el = e.target.closest('[data-close],[data-edit],[data-del],[data-kind],[data-unit],[data-place],[data-art],[data-tab],[data-logout],[data-sync],[data-pass],[data-kode],[data-copy-kode],[data-widget],[data-widget-off],[data-new],[data-tpl],[data-start],[data-open],#ruleClear');
     if (!el) return;
     const today = dateOnly(new Date());
     if ('close' in el.dataset) closeLayer();
     else if ('widget' in el.dataset) copyWidget(el);
+    else if ('pass' in el.dataset) { const f = $('#passForm', layer); f.hidden = !f.hidden; if (!f.hidden) $('#pNy', layer).focus(); }
+    else if ('kode' in el.dataset) newCode(el);
+    else if ('copyKode' in el.dataset) {
+      navigator.clipboard.writeText($('#kodeTxt', layer).textContent).then(() => toast('Koden er kopiert'), () => toast('Merk koden og kopier han for hand.'));
+    }
     else if ('widgetOff' in el.dataset) widgetOff(el);
     else if ('new' in el.dataset) openForm();
     else if (el.dataset.tpl) { const t = TEMPLATES.find(x => x.key === el.dataset.tpl); if (t) openForm(tplEvent(t, today)); }
@@ -1592,7 +1666,12 @@ input[type="date"].input,input[type="time"].input{-webkit-appearance:none;appear
       formErr('');
     }
   });
-  layer.addEventListener('submit', e => { e.preventDefault(); if (e.target.id === 'acctForm') submitAcct(); else submitForm(); });
+  layer.addEventListener('submit', e => {
+    e.preventDefault();
+    if (e.target.id === 'acctForm') submitAcct();
+    else if (e.target.id === 'passForm') submitPass();
+    else submitForm();
+  });
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && !layer.hidden) closeLayer(); });
   document.addEventListener('error', e => {
     const img = e.target;

@@ -53,11 +53,14 @@ async function rute(req, env, url) {
 
   if (m === 'POST' && p === '/konto') return lagKonto(req, env);
   if (m === 'POST' && p === '/logg-inn') return loggInn(req, env);
+  if (m === 'POST' && p === '/nytt-passord') return nyttPassordMedKode(req, env);
 
   const widget = /^\/widget\/([0-9a-f]{64})$/.exec(p);
   if (widget && m === 'GET') return widgetData(req, env, widget[1]);
 
   const namn = await krevInnlogging(req, env);
+  if (m === 'POST' && p === '/passord') return bytPassord(req, env, namn);
+  if (m === 'POST' && p === '/gjenopprettingskode') return svar({ kode: await lagKode(env, namn) }, 201);
   if (m === 'POST' && p === '/widget-nokkel') return lagWidgetNokkel(env, namn);
   if (m === 'DELETE' && p === '/widget-nokkel') {
     await env.DB.prepare('DELETE FROM widgetnoklar WHERE namn = ?').bind(namn).run();
@@ -115,7 +118,7 @@ async function lagKonto(req, env) {
   const salt = tilfeldig(16);
   const hash = await hashPassord(passord, salt, ITER);
   await env.DB.prepare('INSERT INTO brukarar (namn, salt, hash, iter, laga) VALUES (?, ?, ?, ?, ?)').bind(namn, hex(salt), hash, ITER, Date.now()).run();
-  return svar({ namn, token: await lagOkt(env, namn) }, 201);
+  return svar({ namn, token: await lagOkt(env, namn), kode: await lagKode(env, namn) }, 201);
 }
 
 async function loggInn(req, env) {
@@ -135,6 +138,59 @@ async function loggInn(req, env) {
   }
   await env.DB.prepare('DELETE FROM forsok WHERE namn = ?').bind(namn).run();
   return svar({ namn, token: await lagOkt(env, namn) });
+}
+
+// ---------- Passord og gjenopprettingskode ----------
+// Koden er 16 teikn frå eit alfabet utan teikn som er lette å blande (0/O, 1/I/L). Ein ny kode gjer den gamle ugyldig.
+const KODE_ALFABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+const rensKode = s => String(s || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+
+async function lagKode(env, namn) {
+  const tal = tilfeldig(16);
+  const rein = Array.from(tal, b => KODE_ALFABET[b % KODE_ALFABET.length]).join('');
+  await env.DB.prepare('INSERT INTO gjenoppretting (namn, hash, laga) VALUES (?, ?, ?) ON CONFLICT (namn) DO UPDATE SET hash = excluded.hash, laga = excluded.laga')
+    .bind(namn, await sha256(rein), Date.now()).run();
+  return rein.match(/.{4}/g).join('-');
+}
+
+async function settPassord(env, namn, passord) {
+  const salt = tilfeldig(16);
+  const hash = await hashPassord(passord, salt, ITER);
+  await env.DB.prepare('UPDATE brukarar SET salt = ?, hash = ?, iter = ? WHERE namn = ?').bind(hex(salt), hash, ITER, namn).run();
+}
+
+// Innlogga eining: nytt passord utan det gamle. Andre einingar blir logga ut og må bruke det nye.
+async function bytPassord(req, env, namn) {
+  await grense(env, 'passord:' + ip(req));
+  const body = await lesJson(req);
+  const passord = rensPassord(body.passord);
+  await settPassord(env, namn, passord);
+  await env.DB.prepare('DELETE FROM okter WHERE namn = ? AND tokenhash != ?').bind(namn, await sha256(token(req))).run();
+  return svar({ ok: true });
+}
+
+// Gløymt passord: namn + gjenopprettingskode gir nytt passord. Koden kan brukast éin gong, og alle einingar blir logga ut.
+async function nyttPassordMedKode(req, env) {
+  await grense(env, 'nytt:' + ip(req));
+  const body = await lesJson(req);
+  const namn = rensNamn(body.namn);
+  const kode = rensKode(body.kode);
+  const passord = rensPassord(body.passord);
+  const no = Date.now();
+  await env.DB.prepare('DELETE FROM forsok WHERE ts < ?').bind(no - FEIL_VINDAUGE).run();
+  const feil = await env.DB.prepare('SELECT COUNT(*) AS n FROM forsok WHERE namn = ?').bind(namn).first();
+  if (feil && feil.n >= MAKS_FEIL) throw new Feil(429, 'For mange feil forsøk. Vent eit kvarter og prøv igjen.');
+  const rad = await env.DB.prepare('SELECT hash FROM gjenoppretting WHERE namn = ?').bind(namn).first();
+  if (!rad || kode.length !== 16 || !likt(await sha256(kode), rad.hash)) {
+    await env.DB.prepare('INSERT INTO forsok (namn, ts) VALUES (?, ?)').bind(namn, no).run();
+    throw new Feil(401, 'Feil namn eller gjenopprettingskode.');
+  }
+  await settPassord(env, namn, passord);
+  await env.DB.batch([
+    env.DB.prepare('DELETE FROM okter WHERE namn = ?').bind(namn),
+    env.DB.prepare('DELETE FROM forsok WHERE namn = ?').bind(namn),
+  ]);
+  return svar({ namn, token: await lagOkt(env, namn), kode: await lagKode(env, namn) });
 }
 
 async function lagOkt(env, namn) {
